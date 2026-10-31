@@ -2,9 +2,9 @@
 
 ## Evidence boundary
 
-PQEC is a **simulation-validated prototype, not hardware-validated quantum error correction**. The simulator has one unencoded target qubit and repeated X-axis rotations. It has no syndrome extraction, qubit encoding, code distance, or hardware run. The results establish behavior only for the stated model and seed schedule.
+PQEC is a **simulation-validated prototype, not hardware-validated quantum error correction**. The project has an analytic one-qubit simulation and a separate Qiskit Aer noise-model pilot. Both use one unencoded target qubit and repeated X-axis rotations. There is no syndrome extraction, qubit encoding, code distance, or hardware run. Results establish behavior only for the stated models and seed schedules.
 
-The model excludes decoherence, leakage, crosstalk, spatially varying pulse errors beyond the explicit probe-mismatch case, calibration drift outside the specified trajectories, measurement backaction on the target qubit, feedback latency, and the cost of obtaining a hardware state-fidelity estimate. The statevector is used to score fidelity exactly in simulation; fidelity is not inferred from output measurement shots.
+The analytic model excludes decoherence, leakage, crosstalk, asymmetric readout, pulse durations, and feedback latency. Aer v0.1/v0.2 add target/probe T1 and T2 channels, per-gate depolarization, asymmetric probe readout, and target idle relaxation during modeled acquisition and controller time. The v0.2 run adds five graded levels of coherent probe-to-target mismatch and more independent seed blocks. Its physical parameters are stylized rather than device-derived; it still excludes leakage, crosstalk, correlated environmental noise, pulse shaping, and uncertainty in probe calibration. State fidelity is scored from the simulator's internal state and is not estimated from hardware readout shots.
 
 ## Primary guarded-PQEC results at the full budget
 
@@ -41,11 +41,32 @@ At the full budget, the active probe path uses 65 checkpoints × 4,096 shots = 2
 
 The randomized-compiling comparison is a simplified sign-randomization baseline. It does not implement full randomized compiling with circuit-level Pauli insertion, compensating compilation, and Pauli-frame tracking. The oracle method has access to the true upcoming target-qubit error and is an unattainable upper bound, not a deployable controller.
 
+## v0.3 robustness extension
+
+The follow-on sweep adds 35 one-factor-at-a-time conditions, 500 paired runs per condition across five new seed blocks, four simple forecasting baselines, and 630 paired tests with a single global Holm correction. The 512-shots-every-4-cycles reference condition reproduces a guarded-PQEC final-fidelity gain of `+7.764e-5` (95% paired CI `[+5.142e-5, +1.046e-4]`, global `p=0.0126`) and a cumulative-error reduction of `−0.0374°` (CI `[−0.0566°, −0.0183°]`, `p=0.0262`). The RMS gate-angle error is slightly worse by `+0.00363°`. All five seed blocks show the same directions for the two sequence-level effects.
+
+The graded control-transfer study holds probe readout calibrated while ramping the probe's control-error trajectory from 0% to 100% mismatch. At 25%, guarded PQEC is already worse than the reactive baseline on final fidelity (`−0.001911`) and RMS cumulative error (`+0.462°`), with both comparisons globally significant. At 100%, the differences reach `−0.019688` and `+1.380°`. The archived joint control/readout mismatch is retained separately.
+
+This is stronger evidence about robustness within the same analytic model, not a more realistic physical simulation. The full controller comparison, intervals, baselines, block-level effects, and parameter grid are in [the robustness report](robustness_v03.md). The one-factor grid does not test interactions and cannot identify the probe's own transfer mismatch from its measurement history.
+
+## Aer v0.1 noise-model result
+
+The Aer pilot has four conditions, 100 paired trials per condition, and six forecast methods compared with reactive last-probe control. It models finite-shot probe measurements and target waiting time. Across 72 globally Holm-corrected tests, guarded PQEC did not show a supported final-fidelity or cumulative-angle advantage in any condition. Its RMS per-operation coherent-angle residual was higher than reactive control in all four conditions, with global adjusted p = 0.0036.
+
+For the shared-drift, 32-shot condition, guarded PQEC changed final fidelity by −0.001308 (95% paired CI [−0.003515, +0.000701], global p = 1.0000) and RMS cumulative-angle residual by +0.132° (CI [−0.130°, +0.396°], global p = 1.0000). At 50% probe mismatch, the fidelity difference was −0.002188 (CI [−0.004155, −0.000391], global p = 0.6709). Its unadjusted interval is below zero, but the globally adjusted test is not significant.
+
+The reactive controller had nearly the same or better sequence-level outcomes than guarded PQEC in this model. This pilot therefore limits the scope of the analytic result: predictive gains did not automatically transfer after finite-shot probe noise, asymmetric readout, per-gate channels, target/probe parameter differences, and modeled feedback waiting time were combined. Exact parameters and per-trial outputs are in [the Aer report](aer_noise_v01.md).
+
+## Aer v0.2 expanded mismatch study
+
+The expanded Aer run uses 200 paired trials per condition across eight new seed blocks and tests mismatch from 0% to 100%. Guarded PQEC again has no corrected sequence-level advantage in any condition. Its final-fidelity difference becomes significantly negative at the tested 50%, 75%, and 100% mismatch levels after Holm correction over all 144 tests; the 25% result does not pass that threshold. Its RMS per-operation coherent-angle residual is higher than reactive control in all eight conditions (global Holm p = 0.0072 each). The RMS cumulative-angle differences do not survive global correction. Full results and the graded mismatch plot are in [the v0.2 report](aer_noise_v02.md).
+
 ## What remains untested
 
 - Generalization to new seeds, devices, qubit pairs, pulse families, and drift spectra.
 - Robustness to less frequent and less accurate probe readout on a real platform.
 - Probe-to-target transfer under spatially varying control errors and crosstalk.
 - End-to-end benefit after feedback latency, calibration overhead, and output measurement cost.
+- Generalization of the stylized Aer pilot to device-derived T1/T2, pulse durations, readout calibration uncertainty, and realistic controller timing.
 - Any improvement to encoded-qubit error rates or fault-tolerant operation.
 

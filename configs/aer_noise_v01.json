@@ -1,0 +1,108 @@
+{
+  "experiment_id": "pqec-aer-noise-v0.1",
+  "claim_scope": "stylized Qiskit Aer noise-model simulation; not hardware validation",
+  "design": "paired controller comparisons share target trajectories and Aer-sampled auxiliary-probe records",
+  "seed_schedule": {
+    "base_seed": 20261031,
+    "seed_block_ids": [7, 8, 9, 10, 11],
+    "trials_per_seed_block": 20,
+    "seed_block_stride": 1000003,
+    "trial_stride": 1009,
+    "scenario_seed_offsets": {
+      "shared_drift": 0,
+      "white_noise": 100003,
+      "probe_mismatch": 200003
+    },
+    "probe_seed_offset": 700001,
+    "target_seed_offset": 900001,
+    "statistics_seed_offset": 4000000019,
+    "statistics_condition_stride": 1000003,
+    "statistics_method_stride": 1009,
+    "statistics_metric_stride": 97,
+    "statistics_seed_formula": "base_seed + statistics_seed_offset + condition_index*statistics_condition_stride + method_index*statistics_method_stride + metric_index*statistics_metric_stride"
+  },
+  "parameters": {
+    "cycles": 61,
+    "shots": 32,
+    "probe_repetitions": 5,
+    "probe_interval": 8,
+    "predictor_window": 16,
+    "trend_threshold": 2.0,
+    "min_trend_observations": 4,
+    "initial_error_deg": 1.2,
+    "drift_rate_deg_per_cycle": 0.025,
+    "drift_innovation_sigma_deg": 0.001,
+    "independent_control_noise_sigma_deg": 0.3,
+    "probe_mismatch_offset_deg": 0.2,
+    "probe_mismatch_extra_drift_deg_per_cycle": 0.015,
+    "ema_alpha_per_cycle": 0.25,
+    "kalman_acceleration_sigma_deg_per_cycle2": 0.002,
+    "kalman_initial_velocity_sigma_deg_per_cycle": 0.05,
+    "bootstrap_repetitions": 5000,
+    "sign_flip_repetitions": 20000
+  },
+  "noise": {
+    "target": {
+      "t1_us": 500.0,
+      "t2_us": 300.0,
+      "gate_duration_us": 0.025,
+      "depolarizing_probability": 0.001
+    },
+    "probe": {
+      "t1_us": 400.0,
+      "t2_us": 250.0,
+      "gate_duration_us": 0.025,
+      "depolarizing_probability": 0.0015
+    },
+    "probe_readout": {
+      "p_1_given_0": 0.02,
+      "p_0_given_1": 0.04,
+      "controller_calibration": "assumed known exactly; residual calibration mismatch is not swept in this Aer pilot"
+    },
+    "latency": {
+      "reset_duration_us": 0.2,
+      "readout_duration_us": 0.5,
+      "classical_controller_latency_us": 2.0,
+      "target_idle_model": "target waits during serial probe-shot acquisition and classical processing at each non-final checkpoint"
+    }
+  },
+  "probe_response_calibration": {
+    "points": 401,
+    "maximum_error_deg": 8.0,
+    "seed": 20261101,
+    "method": "Aer density-matrix response curve with the configured probe T1/T2, per-gate depolarization, and asymmetric readout matrix"
+  },
+  "conditions": [
+    {
+      "id": "shared_drift_32shot",
+      "label": "Shared slow drift, 32 probe shots",
+      "scenario": "shared_drift",
+      "shots": 32,
+      "probe_mismatch_scale": 0.0
+    },
+    {
+      "id": "shared_drift_8shot",
+      "label": "Shared slow drift, 8 probe shots",
+      "scenario": "shared_drift",
+      "shots": 8,
+      "probe_mismatch_scale": 0.0
+    },
+    {
+      "id": "probe_mismatch_50",
+      "label": "50% probe-to-target control mismatch",
+      "scenario": "probe_mismatch",
+      "shots": 32,
+      "probe_mismatch_scale": 0.5
+    },
+    {
+      "id": "independent_white_noise",
+      "label": "Independent control noise",
+      "scenario": "white_noise",
+      "shots": 32,
+      "probe_mismatch_scale": 0.0
+    }
+  ],
+  "outputs": {
+    "directory": "results/aer_noise_v01"
+  }
+}

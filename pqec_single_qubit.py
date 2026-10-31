@@ -13,6 +13,11 @@ from statistics import mean, pstdev
 from time import perf_counter
 from typing import Iterable
 
+from pqec_baselines import (
+    BASELINE_METHODS,
+    ErrorPredictor,
+    create_baseline_predictor,
+)
 from pqec_controller import PredictiveCompensator
 
 try:
@@ -47,6 +52,12 @@ METHODS = (
     "randomized_compiling",
     "oracle_upper_bound",
 )
+PREDICTIVE_METHODS = (
+    "predictive_linear",
+    "predictive_guarded",
+    *BASELINE_METHODS,
+)
+ROBUSTNESS_METHODS = (*METHODS, *BASELINE_METHODS)
 METHOD_LABELS = {
     "no_compensation": "No compensation",
     "static_calibration": "Static calibration",
@@ -55,6 +66,10 @@ METHOD_LABELS = {
     "predictive_guarded": "Predictive (trend guarded)",
     "randomized_compiling": "Randomized compiling",
     "oracle_upper_bound": "Oracle (upper bound)",
+    "moving_average": "Moving average",
+    "exponential_moving_average": "Exponential moving average",
+    "two_point_linear": "Two-point linear",
+    "kalman_constant_velocity": "Constant-velocity Kalman",
     "ideal_reference": "Ideal reference",
 }
 
@@ -156,7 +171,7 @@ def measure_probe_error(
     error_rad: float,
     shots: int,
     repetitions: int,
-    rng: random.Random,
+    rng: object,
     readout_error: float,
     readout_calibration: float,
 ) -> float:
@@ -165,7 +180,14 @@ def measure_probe_error(
     observed_probability_zero = (
         readout_error + (1.0 - 2.0 * readout_error) * probability_zero
     )
-    zero_count = sum(rng.random() < observed_probability_zero for _ in range(shots))
+    binomial = getattr(rng, "binomial", None)
+    if callable(binomial):
+        zero_count = int(binomial(shots, observed_probability_zero))
+    else:
+        random_sample = getattr(rng, "random")
+        zero_count = sum(
+            random_sample() < observed_probability_zero for _ in range(shots)
+        )
     measured_probability_zero = zero_count / shots
     if readout_calibration < 0.5:
         measured_probability_zero = (
@@ -191,6 +213,8 @@ def make_trajectory(
     probe_readout_error: float,
     probe_readout_calibration_error: float,
     probe_mismatch_readout_error: float,
+    probe_mismatch_scale: float = 1.0,
+    probe_readout_mismatch_scale: float = 1.0,
 ) -> tuple[float, list[float], float, list[float], float, float]:
     """Generate separate logical and probe errors for one modeled condition."""
     logical_rng = random.Random(seed)
@@ -225,6 +249,13 @@ def make_trajectory(
         readout_calibration = probe_readout_calibration_error
 
     elif scenario == "probe_mismatch":
+        if not math.isfinite(probe_mismatch_scale) or not 0.0 <= probe_mismatch_scale <= 1.0:
+            raise ValueError("probe_mismatch_scale must be in [0, 1].")
+        if (
+            not math.isfinite(probe_readout_mismatch_scale)
+            or not 0.0 <= probe_readout_mismatch_scale <= 1.0
+        ):
+            raise ValueError("probe_readout_mismatch_scale must be in [0, 1].")
         logical_drift = degrees(drift_rate_deg)
         logical_jitter = degrees(drift_jitter_deg)
         probe_drift = degrees(probe_mismatch_drift_rate_deg)
@@ -248,9 +279,31 @@ def make_trajectory(
 
         logical_startup = logical_error_at(-1)
         logical_errors = [logical_error_at(cycle) for cycle in range(cycles)]
-        probe_startup = probe_error_at(-1)
-        probe_errors = [probe_error_at(cycle) for cycle in range(cycles)]
-        actual_readout_error = probe_mismatch_readout_error
+        independent_probe_startup = probe_error_at(-1)
+        independent_probe_errors = [
+            probe_error_at(cycle) for cycle in range(cycles)
+        ]
+        if probe_mismatch_scale == 1.0:
+            # Keep the archived v0.2 mismatch trajectory bit-for-bit unchanged.
+            probe_startup = independent_probe_startup
+            probe_errors = independent_probe_errors
+        elif probe_mismatch_scale == 0.0:
+            probe_startup = logical_startup
+            probe_errors = logical_errors.copy()
+        else:
+            probe_startup = logical_startup + probe_mismatch_scale * (
+                independent_probe_startup - logical_startup
+            )
+            probe_errors = [
+                target_error
+                + probe_mismatch_scale * (probe_error - target_error)
+                for target_error, probe_error in zip(
+                    logical_errors, independent_probe_errors
+                )
+            ]
+        actual_readout_error = probe_readout_error + probe_readout_mismatch_scale * (
+            probe_mismatch_readout_error - probe_readout_error
+        )
         readout_calibration = probe_readout_calibration_error
 
     else:
@@ -275,9 +328,11 @@ def make_probe_record(
     seed: int,
     readout_error: float,
     readout_calibration: float,
+    rng: object | None = None,
 ) -> tuple[float, list[tuple[int, float]]]:
     """Measure only an auxiliary probe qubit, never the target qubit."""
-    rng = random.Random(seed)
+    if rng is None:
+        rng = random.Random(seed)
     startup_reading = measure_probe_error(
         startup_error,
         shots,
@@ -306,7 +361,7 @@ def correction_for(
     startup_reading: float,
     post_gate_readings: list[tuple[int, float]],
     predictor_window: int,
-    predictor: PredictiveCompensator | None = None,
+    predictor: ErrorPredictor | None = None,
 ) -> tuple[float, float | None]:
     """Return the applied correction and, for PQEC, the forecast value."""
     if method == "no_compensation" or method == "randomized_compiling":
@@ -319,7 +374,7 @@ def correction_for(
         return startup_reading, None
     if method == "reactive_last_probe":
         return available[-1][1], None
-    if method in ("predictive_linear", "predictive_guarded"):
+    if method in PREDICTIVE_METHODS:
         if predictor is None:
             predictor = PredictiveCompensator(
                 predictor_window,
@@ -382,6 +437,8 @@ def evaluate_trial(
     trial: int,
     config: argparse.Namespace,
     ideal_state: tuple[complex, complex],
+    methods: tuple[str, ...] | None = None,
+    measurement_rng_backend: str = "python",
 ) -> list[dict[str, object]]:
     seed = (
         config.seed
@@ -410,16 +467,32 @@ def evaluate_trial(
         config.probe_readout_error,
         config.probe_readout_calibration_error,
         config.probe_mismatch_readout_error,
+        getattr(config, "probe_mismatch_scale", 1.0),
+        getattr(config, "probe_readout_mismatch_scale", 1.0),
     )
+    probe_measurement_seed = seed + 700_001
+    if measurement_rng_backend == "python":
+        probe_rng: object | None = None
+    elif measurement_rng_backend == "numpy":
+        try:
+            import numpy as np
+        except ImportError as exc:
+            raise RuntimeError(
+                "NumPy sampling requires numpy; install requirements-robustness.txt."
+            ) from exc
+        probe_rng = np.random.default_rng(probe_measurement_seed)
+    else:
+        raise ValueError(f"Unknown measurement RNG backend: {measurement_rng_backend}")
     startup_reading, post_gate_readings = make_probe_record(
         probe_startup_error,
         probe_errors,
         config.shots,
         config.probe_repetitions,
         config.probe_interval,
-        seed + 700_001,
+        probe_measurement_seed,
         actual_readout_error,
         readout_calibration,
+        rng=probe_rng,
     )
 
     max_abs_probe_error = max(
@@ -432,7 +505,8 @@ def evaluate_trial(
         )
 
     rows: list[dict[str, object]] = []
-    for method in METHODS:
+    selected_methods = METHODS if methods is None else methods
+    for method in selected_methods:
         repeated_metrics: list[dict[str, float]] = []
         prediction_errors: list[float] = []
         repeat_count = config.rc_compilations if method == "randomized_compiling" else 1
@@ -449,6 +523,45 @@ def evaluate_trial(
                     trend_threshold=config.trend_threshold,
                     min_trend_observations=config.min_trend_observations,
                     anchor_to_latest=True,
+                )
+            elif method in BASELINE_METHODS:
+                calibration_error = config.probe_readout_calibration_error
+                shot_variance = 1.0 / (
+                    config.probe_repetitions**2
+                    * config.shots
+                    * (1.0 - 2.0 * calibration_error) ** 2
+                )
+                local_noise_scale = (
+                    getattr(config, "probe_mismatch_scale", 1.0)
+                    if scenario == "probe_mismatch"
+                    else 0.0
+                )
+                local_noise_variance = degrees(
+                    config.probe_local_noise_sigma_deg * local_noise_scale
+                ) ** 2
+                predictor = create_baseline_predictor(
+                    method,
+                    window=config.predictor_window,
+                    ema_alpha_per_cycle=getattr(
+                        config, "ema_alpha_per_cycle", 0.25
+                    ),
+                    kalman_measurement_variance_rad2=(
+                        shot_variance + local_noise_variance
+                    ),
+                    kalman_acceleration_sigma_rad_per_cycle2=degrees(
+                        getattr(
+                            config,
+                            "kalman_acceleration_sigma_deg_per_cycle2",
+                            0.002,
+                        )
+                    ),
+                    kalman_initial_velocity_sigma_rad_per_cycle=degrees(
+                        getattr(
+                            config,
+                            "kalman_initial_velocity_sigma_deg_per_cycle",
+                            0.05,
+                        )
+                    ),
                 )
             else:
                 predictor = None
@@ -507,7 +620,17 @@ def evaluate_trial(
         result["shots_per_probe"] = config.shots
         result["probe_repetitions"] = config.probe_repetitions
         result["probe_interval"] = config.probe_interval
+        result["measurement_rng_backend"] = measurement_rng_backend
         result["predictor_window"] = config.predictor_window
+        result["ema_alpha_per_cycle"] = getattr(
+            config, "ema_alpha_per_cycle", 0.25
+        )
+        result["kalman_acceleration_sigma_deg_per_cycle2"] = getattr(
+            config, "kalman_acceleration_sigma_deg_per_cycle2", 0.002
+        )
+        result["kalman_initial_velocity_sigma_deg_per_cycle"] = getattr(
+            config, "kalman_initial_velocity_sigma_deg_per_cycle", 0.05
+        )
         result["trend_threshold"] = config.trend_threshold
         result["min_trend_observations"] = config.min_trend_observations
         result["base_error_deg"] = config.base_error_deg
@@ -515,6 +638,12 @@ def evaluate_trial(
         result["drift_jitter_deg"] = config.drift_jitter_deg
         result["white_noise_sigma_deg"] = config.white_noise_sigma_deg
         result["probe_mismatch_offset_deg"] = config.probe_mismatch_offset_deg
+        result["probe_mismatch_scale"] = getattr(
+            config, "probe_mismatch_scale", 1.0
+        )
+        result["probe_readout_mismatch_scale"] = getattr(
+            config, "probe_readout_mismatch_scale", 1.0
+        )
         result["probe_mismatch_drift_rate_deg"] = (
             config.probe_mismatch_drift_rate_deg
         )
@@ -527,11 +656,7 @@ def evaluate_trial(
         probe_checkpoints_available = 1 + len(post_gate_readings)
         if method == "static_calibration":
             probe_checkpoints_used = 1
-        elif method in (
-            "reactive_last_probe",
-            "predictive_linear",
-            "predictive_guarded",
-        ):
+        elif method in ("reactive_last_probe", *PREDICTIVE_METHODS):
             probe_checkpoints_used = probe_checkpoints_available
         else:
             probe_checkpoints_used = 0
@@ -572,7 +697,17 @@ def evaluate_trial(
             "shots_per_probe": config.shots,
             "probe_repetitions": config.probe_repetitions,
             "probe_interval": config.probe_interval,
+            "measurement_rng_backend": measurement_rng_backend,
             "predictor_window": config.predictor_window,
+            "ema_alpha_per_cycle": getattr(
+                config, "ema_alpha_per_cycle", 0.25
+            ),
+            "kalman_acceleration_sigma_deg_per_cycle2": getattr(
+                config, "kalman_acceleration_sigma_deg_per_cycle2", 0.002
+            ),
+            "kalman_initial_velocity_sigma_deg_per_cycle": getattr(
+                config, "kalman_initial_velocity_sigma_deg_per_cycle", 0.05
+            ),
             "trend_threshold": config.trend_threshold,
             "min_trend_observations": config.min_trend_observations,
             "base_error_deg": config.base_error_deg,
@@ -580,6 +715,12 @@ def evaluate_trial(
             "drift_jitter_deg": config.drift_jitter_deg,
             "white_noise_sigma_deg": config.white_noise_sigma_deg,
             "probe_mismatch_offset_deg": config.probe_mismatch_offset_deg,
+            "probe_mismatch_scale": getattr(
+                config, "probe_mismatch_scale", 1.0
+            ),
+            "probe_readout_mismatch_scale": getattr(
+                config, "probe_readout_mismatch_scale", 1.0
+            ),
             "probe_mismatch_drift_rate_deg": config.probe_mismatch_drift_rate_deg,
             "probe_local_noise_sigma_deg": config.probe_local_noise_sigma_deg,
             "probe_readout_error": "",
@@ -628,6 +769,13 @@ def summarize(
                 "shots_per_probe": group[0]["shots_per_probe"],
                 "probe_repetitions": group[0]["probe_repetitions"],
                 "probe_interval": group[0]["probe_interval"],
+                "ema_alpha_per_cycle": group[0]["ema_alpha_per_cycle"],
+                "kalman_acceleration_sigma_deg_per_cycle2": group[0][
+                    "kalman_acceleration_sigma_deg_per_cycle2"
+                ],
+                "kalman_initial_velocity_sigma_deg_per_cycle": group[0][
+                    "kalman_initial_velocity_sigma_deg_per_cycle"
+                ],
                 "probe_checkpoints_available_per_run": group[0][
                     "probe_checkpoints_available_per_run"
                 ],
@@ -639,6 +787,10 @@ def summarize(
                 "drift_jitter_deg": group[0]["drift_jitter_deg"],
                 "white_noise_sigma_deg": group[0]["white_noise_sigma_deg"],
                 "probe_mismatch_offset_deg": group[0]["probe_mismatch_offset_deg"],
+                "probe_mismatch_scale": group[0]["probe_mismatch_scale"],
+                "probe_readout_mismatch_scale": group[0][
+                    "probe_readout_mismatch_scale"
+                ],
                 "probe_mismatch_drift_rate_deg": group[0][
                     "probe_mismatch_drift_rate_deg"
                 ],
@@ -895,6 +1047,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--probe-repetitions", type=int, default=13)
     parser.add_argument("--probe-interval", type=int, default=1)
     parser.add_argument("--predictor-window", type=int, default=16)
+    parser.add_argument("--ema-alpha-per-cycle", type=float, default=0.25)
+    parser.add_argument(
+        "--kalman-acceleration-sigma-deg-per-cycle2", type=float, default=0.002
+    )
+    parser.add_argument(
+        "--kalman-initial-velocity-sigma-deg-per-cycle", type=float, default=0.05
+    )
     parser.add_argument("--trend-threshold", type=float, default=2.0)
     parser.add_argument("--min-trend-observations", type=int, default=4)
     parser.add_argument("--rc-compilations", type=int, default=1)
@@ -906,6 +1065,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--drift-jitter-deg", type=float, default=0.005)
     parser.add_argument("--white-noise-sigma-deg", type=float, default=0.20)
     parser.add_argument("--probe-mismatch-offset-deg", type=float, default=0.20)
+    parser.add_argument("--probe-mismatch-scale", type=float, default=1.0)
+    parser.add_argument(
+        "--probe-readout-mismatch-scale", type=float, default=1.0
+    )
     parser.add_argument("--probe-mismatch-drift-rate-deg", type=float, default=0.03)
     parser.add_argument("--probe-local-noise-sigma-deg", type=float, default=0.05)
     parser.add_argument("--probe-readout-error", type=float, default=0.01)
@@ -972,6 +1135,17 @@ def parse_args() -> argparse.Namespace:
         parser.error("Noise standard deviations cannot be negative.")
     if args.probe_local_noise_sigma_deg < 0.0:
         parser.error("Probe-local noise standard deviation cannot be negative.")
+    if not math.isfinite(args.probe_mismatch_scale) or not 0.0 <= args.probe_mismatch_scale <= 1.0:
+        parser.error("--probe-mismatch-scale must be in [0, 1].")
+    if not math.isfinite(args.probe_readout_mismatch_scale) or not 0.0 <= args.probe_readout_mismatch_scale <= 1.0:
+        parser.error("--probe-readout-mismatch-scale must be in [0, 1].")
+    if not 0.0 < args.ema_alpha_per_cycle <= 1.0:
+        parser.error("--ema-alpha-per-cycle must be in (0, 1].")
+    if min(
+        args.kalman_acceleration_sigma_deg_per_cycle2,
+        args.kalman_initial_velocity_sigma_deg_per_cycle,
+    ) < 0.0:
+        parser.error("Kalman sigmas cannot be negative.")
     for error_rate in (
         args.probe_readout_error,
         args.probe_readout_calibration_error,

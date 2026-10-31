@@ -1,0 +1,99 @@
+{
+  "experiment_id": "pqec-robustness-v0.3",
+  "claim_scope": "analytic single-qubit simulation; no hardware or Qiskit Aer validation",
+  "design": "one-factor-at-a-time sensitivity grid; paired controller comparisons within each condition",
+  "seed_schedule": {
+    "base_seed": 20261031,
+    "seed_block_ids": [2, 3, 4, 5, 6],
+    "trials_per_block": 100,
+    "seed_block_stride": 1000003,
+    "trial_stride": 1009,
+    "scenario_offsets": {
+      "slow_drift": 0,
+      "white_noise": 100003,
+      "probe_mismatch": 200003
+    },
+    "probe_trajectory_seed_offset": 5000117,
+    "probe_measurement_seed_offset": 700001,
+    "probe_measurement_rng": "numpy.random.default_rng; record NumPy version and bit generator",
+    "statistics_seed_formula": "bootstrap = base_seed + 4000000019 + condition_index*1000003; permutation = bootstrap + 2000003",
+    "resampling_patterns": "shared across comparisons within a condition; each comparison remains paired across trials"
+  },
+  "parameters": {
+    "cycles": 64,
+    "trials": 100,
+    "seed_blocks": 5,
+    "seed_block_ids": [2, 3, 4, 5, 6],
+    "seed": 20261031,
+    "shots": 512,
+    "probe_repetitions": 13,
+    "probe_interval": 4,
+    "predictor_window": 16,
+    "trend_threshold": 2.0,
+    "min_trend_observations": 4,
+    "rc_compilations": 1,
+    "bootstrap_repetitions": 5000,
+    "permutation_repetitions": 50000,
+    "base_error_deg": 2.0,
+    "drift_rate_deg": 0.01,
+    "drift_jitter_deg": 0.005,
+    "white_noise_sigma_deg": 0.2,
+    "probe_mismatch_offset_deg": 0.2,
+    "probe_mismatch_scale": 1.0,
+    "probe_readout_mismatch_scale": 1.0,
+    "probe_mismatch_drift_rate_deg": 0.03,
+    "probe_local_noise_sigma_deg": 0.05,
+    "probe_readout_error": 0.01,
+    "probe_readout_calibration_error": 0.01,
+    "probe_mismatch_readout_error": 0.02,
+    "ema_alpha_per_cycle": 0.25,
+    "kalman_acceleration_sigma_deg_per_cycle2": 0.002,
+    "kalman_initial_velocity_sigma_deg_per_cycle": 0.05
+  },
+  "outputs": {
+    "directory": "results/robustness_v03"
+  },
+  "conditions": [
+    {"id": "drift_0", "scenario": "slow_drift", "axis": "drift_rate_deg", "parameter": "drift_rate_deg", "value": 0.0, "label": "0 deg/cycle"},
+    {"id": "drift_0p0025", "scenario": "slow_drift", "axis": "drift_rate_deg", "parameter": "drift_rate_deg", "value": 0.0025, "label": "0.0025 deg/cycle"},
+    {"id": "drift_0p005", "scenario": "slow_drift", "axis": "drift_rate_deg", "parameter": "drift_rate_deg", "value": 0.005, "label": "0.005 deg/cycle"},
+    {"id": "drift_0p01", "scenario": "slow_drift", "axis": "drift_rate_deg", "parameter": "drift_rate_deg", "value": 0.01, "label": "0.01 deg/cycle"},
+    {"id": "drift_0p02", "scenario": "slow_drift", "axis": "drift_rate_deg", "parameter": "drift_rate_deg", "value": 0.02, "label": "0.02 deg/cycle"},
+    {"id": "drift_0p04", "scenario": "slow_drift", "axis": "drift_rate_deg", "parameter": "drift_rate_deg", "value": 0.04, "label": "0.04 deg/cycle"},
+
+    {"id": "base_error_0p5", "scenario": "slow_drift", "axis": "base_error_deg", "parameter": "base_error_deg", "value": 0.5, "label": "0.5 deg initial error"},
+    {"id": "base_error_1", "scenario": "slow_drift", "axis": "base_error_deg", "parameter": "base_error_deg", "value": 1.0, "label": "1 deg initial error"},
+    {"id": "base_error_2", "scenario": "slow_drift", "axis": "base_error_deg", "parameter": "base_error_deg", "value": 2.0, "label": "2 deg initial error"},
+    {"id": "base_error_3", "scenario": "slow_drift", "axis": "base_error_deg", "parameter": "base_error_deg", "value": 3.0, "label": "3 deg initial error"},
+    {"id": "base_error_4", "scenario": "slow_drift", "axis": "base_error_deg", "parameter": "base_error_deg", "value": 4.0, "label": "4 deg initial error"},
+
+    {"id": "mismatch_0", "scenario": "probe_mismatch", "axis": "probe_mismatch_scale", "parameter": "probe_mismatch_scale", "value": 0.0, "overrides": {"probe_readout_mismatch_scale": 0.0}, "label": "0% control mismatch; matched readout"},
+    {"id": "mismatch_25", "scenario": "probe_mismatch", "axis": "probe_mismatch_scale", "parameter": "probe_mismatch_scale", "value": 0.25, "overrides": {"probe_readout_mismatch_scale": 0.0}, "label": "25% control mismatch; matched readout"},
+    {"id": "mismatch_50", "scenario": "probe_mismatch", "axis": "probe_mismatch_scale", "parameter": "probe_mismatch_scale", "value": 0.5, "overrides": {"probe_readout_mismatch_scale": 0.0}, "label": "50% control mismatch; matched readout"},
+    {"id": "mismatch_75", "scenario": "probe_mismatch", "axis": "probe_mismatch_scale", "parameter": "probe_mismatch_scale", "value": 0.75, "overrides": {"probe_readout_mismatch_scale": 0.0}, "label": "75% control mismatch; matched readout"},
+    {"id": "mismatch_100", "scenario": "probe_mismatch", "axis": "probe_mismatch_scale", "parameter": "probe_mismatch_scale", "value": 1.0, "overrides": {"probe_readout_mismatch_scale": 0.0}, "label": "100% control mismatch; matched readout"},
+    {"id": "mismatch_joint_100", "scenario": "probe_mismatch", "axis": "probe_readout_mismatch_scale", "parameter": "probe_readout_mismatch_scale", "value": 1.0, "overrides": {"probe_mismatch_scale": 1.0}, "label": "100% control plus readout mismatch"},
+
+    {"id": "probe_local_noise_0", "scenario": "probe_mismatch", "axis": "probe_local_noise_sigma_deg", "parameter": "probe_local_noise_sigma_deg", "value": 0.0, "label": "0 deg probe-local sigma"},
+    {"id": "probe_local_noise_0p02", "scenario": "probe_mismatch", "axis": "probe_local_noise_sigma_deg", "parameter": "probe_local_noise_sigma_deg", "value": 0.02, "label": "0.02 deg probe-local sigma"},
+    {"id": "probe_local_noise_0p05", "scenario": "probe_mismatch", "axis": "probe_local_noise_sigma_deg", "parameter": "probe_local_noise_sigma_deg", "value": 0.05, "label": "0.05 deg probe-local sigma"},
+    {"id": "probe_local_noise_0p1", "scenario": "probe_mismatch", "axis": "probe_local_noise_sigma_deg", "parameter": "probe_local_noise_sigma_deg", "value": 0.1, "label": "0.1 deg probe-local sigma"},
+
+    {"id": "readout_0", "scenario": "slow_drift", "axis": "probe_readout_error", "parameter": "probe_readout_error", "value": 0.0, "overrides": {"probe_readout_calibration_error": 0.0, "probe_mismatch_readout_error": 0.0}, "label": "0% readout bit-flip"},
+    {"id": "readout_1", "scenario": "slow_drift", "axis": "probe_readout_error", "parameter": "probe_readout_error", "value": 0.01, "overrides": {"probe_readout_calibration_error": 0.01, "probe_mismatch_readout_error": 0.01}, "label": "1% calibrated readout bit-flip"},
+    {"id": "readout_3", "scenario": "slow_drift", "axis": "probe_readout_error", "parameter": "probe_readout_error", "value": 0.03, "overrides": {"probe_readout_calibration_error": 0.03, "probe_mismatch_readout_error": 0.03}, "label": "3% calibrated readout bit-flip"},
+    {"id": "readout_5", "scenario": "slow_drift", "axis": "probe_readout_error", "parameter": "probe_readout_error", "value": 0.05, "overrides": {"probe_readout_calibration_error": 0.05, "probe_mismatch_readout_error": 0.05}, "label": "5% calibrated readout bit-flip"},
+    {"id": "readout_10", "scenario": "slow_drift", "axis": "probe_readout_error", "parameter": "probe_readout_error", "value": 0.1, "overrides": {"probe_readout_calibration_error": 0.1, "probe_mismatch_readout_error": 0.1}, "label": "10% calibrated readout bit-flip"},
+
+    {"id": "white_noise_0", "scenario": "white_noise", "axis": "white_noise_sigma_deg", "parameter": "white_noise_sigma_deg", "value": 0.0, "label": "0 deg white-noise sigma"},
+    {"id": "white_noise_0p1", "scenario": "white_noise", "axis": "white_noise_sigma_deg", "parameter": "white_noise_sigma_deg", "value": 0.1, "label": "0.1 deg white-noise sigma"},
+    {"id": "white_noise_0p2", "scenario": "white_noise", "axis": "white_noise_sigma_deg", "parameter": "white_noise_sigma_deg", "value": 0.2, "label": "0.2 deg white-noise sigma"},
+    {"id": "white_noise_0p4", "scenario": "white_noise", "axis": "white_noise_sigma_deg", "parameter": "white_noise_sigma_deg", "value": 0.4, "label": "0.4 deg white-noise sigma"},
+
+    {"id": "budget_64_i8", "scenario": "slow_drift", "axis": "measurement_budget_shots", "parameter": "shots", "value": 64, "overrides": {"probe_interval": 8}, "label": "64 shots/checkpoint, every 8 cycles"},
+    {"id": "budget_128_i4", "scenario": "slow_drift", "axis": "measurement_budget_shots", "parameter": "shots", "value": 128, "overrides": {"probe_interval": 4}, "label": "128 shots/checkpoint, every 4 cycles"},
+    {"id": "budget_128_i1", "scenario": "slow_drift", "axis": "measurement_budget_shots", "parameter": "shots", "value": 128, "overrides": {"probe_interval": 1}, "label": "128 shots/checkpoint, every cycle"},
+    {"id": "budget_512_i4", "scenario": "slow_drift", "axis": "measurement_budget_shots", "parameter": "shots", "value": 512, "overrides": {"probe_interval": 4}, "label": "512 shots/checkpoint, every 4 cycles"},
+    {"id": "budget_4096_i1", "scenario": "slow_drift", "axis": "measurement_budget_shots", "parameter": "shots", "value": 4096, "overrides": {"probe_interval": 1}, "label": "4096 shots/checkpoint, every cycle"}
+  ]
+}

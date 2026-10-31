@@ -36,6 +36,8 @@
     "drift_jitter_deg": 0.005,
     "white_noise_sigma_deg": 0.2,
     "probe_mismatch_offset_deg": 0.2,
+    "probe_mismatch_scale": 1.0,
+    "probe_readout_mismatch_scale": 1.0,
     "probe_mismatch_drift_rate_deg": 0.03,
     "probe_local_noise_sigma_deg": 0.05,
     "probe_readout_error": 0.01,

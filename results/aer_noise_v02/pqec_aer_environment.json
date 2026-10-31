@@ -1,0 +1,9 @@
+{
+  "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "qiskit": "2.6.1",
+  "qiskit_aer": "0.18.2",
+  "numpy": "2.5.4",
+  "matplotlib": "3.11.2",
+  "aer_method": "density_matrix",
+  "elapsed_wall_seconds": 31.38023869999961
+}

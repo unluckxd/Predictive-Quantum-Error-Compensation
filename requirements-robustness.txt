@@ -1,0 +1,4 @@
+# Pinned for the saved v0.3 robustness sweep and its NumPy Generator streams.
+numpy==2.3.5
+# Pinned for reproducible standalone scientific figures.
+matplotlib==3.11.2

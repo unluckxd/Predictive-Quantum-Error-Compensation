@@ -1,14 +1,14 @@
 # Mathematical Model
 
-## Logical operation and residual error
+## Target operation and residual error
 
-The target gate in each of $N=64$ cycles is
+The target operation in each of $N=64$ cycles is
 
 $$
 U_i^{\rm ideal}=R_x(\theta),\qquad \theta=\pi/2.
 $$
 
-Let $\delta_i$ be the actual coherent angle error in cycle $i$, and let $c_i$ be the controller's compensation. The commanded angle is $\theta-c_i$; the realized operation and residual error are
+Let $\delta_i$ be the target-qubit's actual coherent angle error in cycle $i$, and let $c_i$ be the controller's compensation. The commanded angle is $\theta-c_i$; the realized operation and residual error are
 
 $$
 U_i=R_x(\theta+\delta_i-c_i),\qquad e_i=\delta_i-c_i.
@@ -28,7 +28,7 @@ $$
 E_{\rm RMS}=\sqrt{\frac{1}{N}\sum_{j=1}^{N}E_j^2}.
 $$
 
-Final state fidelity and gate fidelity answer different questions: the former depends on the accumulated residual angle, while the latter is averaged per gate. `rms_gate_error_deg` is the RMS of the per-cycle residuals. `prediction_mae_deg` is the mean absolute forecast error against the simulator's hidden upcoming logical error; it is a simulation-only diagnostic and is unavailable to the controller. Probe-shot and modeled probe-rotation counts are the resource-overhead measures in the result files.
+Final state fidelity and gate fidelity answer different questions: the former depends on the accumulated residual angle, while the latter is averaged per gate. `rms_gate_error_deg` is the RMS of the per-cycle residuals. `prediction_mae_deg` is the mean absolute forecast error against the simulator's hidden upcoming target-qubit error; it is a simulation-only diagnostic and is unavailable to the controller. Probe-shot and modeled probe-rotation counts are the resource-overhead measures in the result files.
 
 ## Auxiliary probe measurement
 
@@ -54,19 +54,19 @@ The run configuration uses $m=13$. The signed estimator is unambiguous only whil
 
 ## Drift and noise scenarios
 
-Angles below are in degrees; $i$ is the zero-based logical cycle. The base offset is 2 degrees in all conditions.
+Angles below are in degrees; $i$ is the zero-based target-operation cycle. The base offset is 2 degrees in all conditions.
 
-| Scenario | Logical error | Probe error | Purpose |
+| Scenario | Target-qubit error | Probe error | Purpose |
 | --- | --- | --- | --- |
-| Shared slow drift | $2+0.01i+\epsilon_i$, with $\epsilon_i\sim\mathcal{N}(0,0.005^2)$ | Same trajectory as the logical qubit | Tests the favorable shared-drift assumption |
+| Shared slow drift | $2+0.01i+\epsilon_i$, with $\epsilon_i\sim\mathcal{N}(0,0.005^2)$ | Same trajectory as the target qubit | Tests the favorable shared-drift assumption |
 | Independent white noise | $2+\epsilon_i$, with $\epsilon_i\sim\mathcal{N}(0,0.2^2)$ | Independently generated noise from the same distribution | Tests whether prediction helps without correlated probe information |
 | Probe mismatch | $2+0.01i+\epsilon_i$ | $2+0.20+0.03i+\eta_i$, with $\eta_i\sim\mathcal{N}(0,0.05^2)$ | Stress-tests offset, drift-rate, and local-noise mismatch |
 
-Logical jitter in the mismatch case uses the same 0.005-degree standard deviation as the shared-drift case. The mismatch case also uses 2% actual probe readout error while the correction assumes 1%. Other modeled cases use 1% actual and assumed readout error.
+Target-qubit jitter in the mismatch case uses the same 0.005-degree standard deviation as the shared-drift case. The mismatch case also uses 2% actual probe readout error while the correction assumes 1%. Other modeled cases use 1% actual and assumed readout error.
 
 ## Prediction rules
 
-For each logical pulse, only probe observations from earlier cycles are available. The reactive rule uses the latest such estimate. The predictive rules fit a least-squares line to the most recent $W=16$ observations and forecast at the target cycle.
+For each target operation, only probe observations from earlier cycles are available. The reactive rule uses the latest such estimate. The predictive rules fit a least-squares line to the most recent $W=16$ observations and forecast at the target cycle.
 
 For guarded PQEC, fewer than 4 observations force the fitted slope to zero. Otherwise, with fitted slope $b$, its standard error $s_b$, and threshold $\tau=2$, the trend score is $q=|b|/s_b$. If $q\leq\tau$, the slope is set to zero; otherwise it is shrunk to
 

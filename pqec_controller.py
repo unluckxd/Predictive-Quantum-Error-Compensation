@@ -10,7 +10,7 @@ class PredictiveCompensator:
     """Forecast the next coherent angle error from prior probe readings.
 
     All angles are in radians. The controller only sees values passed to
-    observe(); it has no access to the logical qubit or to future errors.
+    observe(); it has no access to the target qubit or to future errors.
     """
 
     def __init__(

@@ -276,7 +276,7 @@ def make_probe_record(
     readout_error: float,
     readout_calibration: float,
 ) -> tuple[float, list[tuple[int, float]]]:
-    """Measure only an auxiliary calibration qubit, never the logical qubit."""
+    """Measure only an auxiliary probe qubit, never the target qubit."""
     rng = random.Random(seed)
     startup_reading = measure_probe_error(
         startup_error,
@@ -1023,7 +1023,7 @@ def main() -> None:
         f"{probe_checkpoints * config.shots:,} shots; "
         f"{probe_checkpoints * config.shots * config.probe_repetitions:,} "
         f"probe rotations (one probe measurement every {config.probe_interval} "
-        "logical pulses)."
+        "target operations)."
     )
     print_summary(summary_rows)
     print_paired_statistics(paired_rows)

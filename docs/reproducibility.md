@@ -6,11 +6,12 @@ Use Python 3.10 or later from the repository root. The archived v0.2 data use th
 
 ```powershell
 python -m venv .venv
-.venv/Scripts/Activate.ps1
-# Do not install Qiskit when reproducing the archived analytic-fallback runs.
+.\.venv\Scripts\Activate.ps1
+
 python pqec_single_qubit.py --config configs/full_run_v02.json
 python pqec_budget_sweep.py --config configs/budget_sweep_v02.json
 python plot_results.py
+
 python -m unittest discover -s tests -v
 ```
 
@@ -20,7 +21,7 @@ To run the optional Qiskit backend, install it before starting the scripts with 
 
 ## Frozen configurations
 
-- [`full_run_v02.json`](../configs/full_run_v02.json): 64 logical cycles, 100 trials in each of two seed blocks, 4,096 shots per probe checkpoint, one checkpoint every cycle.
+- [`full_run_v02.json`](../configs/full_run_v02.json): 64 target-operation cycles, 100 trials in each of two seed blocks, 4,096 shots per probe checkpoint, one checkpoint every cycle.
 - [`budget_sweep_v02.json`](../configs/budget_sweep_v02.json): the same seed schedule and trajectories evaluated at five shot-count/checkpoint-interval settings.
 
 Both configurations state their experiment ID, claim scope, base seed, seed offsets/strides, statistics seed formula, and model parameters. The saved v0.2 CSVs were produced with the analytic fallback. The historical v0.1 Qiskit CSV files are separate and should not be combined with the v0.2 tables.
@@ -37,12 +38,12 @@ Scenario offsets are 0 for `slow_drift`, 100003 for `white_noise`, and 200003 fo
 
 | Random stream | Seed |
 | --- | --- |
-| Logical trajectory | trajectory seed |
+| Target-qubit trajectory | trajectory seed |
 | Probe trajectory | trajectory seed + 5,000,117 |
 | Probe shot/readout sampling | trajectory seed + 700,001 |
 | Randomized-compiling signs | trajectory seed + 900,001 + repeat index × 97 |
 
-The controller comparison uses paired trajectories: methods within one scenario/block/trial share the same logical trajectory and probe record. `results/experiment_seed_manifest.csv` lists the 600 unique scenario/block/trial records and their derived per-run seeds.
+The controller comparison uses paired trajectories: methods within one scenario/block/trial share the same target-qubit trajectory and probe record. `results/experiment_seed_manifest.csv` lists the 600 unique scenario/block/trial records and their derived per-run seeds.
 
 For scenario index $s$, metric index $m$, and predictor index $p$ (linear=0, guarded=1), the statistics seeds are
 

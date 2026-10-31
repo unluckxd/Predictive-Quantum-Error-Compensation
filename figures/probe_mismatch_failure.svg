@@ -4,7 +4,7 @@
 <rect width="1320" height="760" fill="#FFFFFF"/>
 <rect x="0.00" y="0.00" width="1320.00" height="115.00" rx="0.00" fill="#FFF1F1" stroke="none"/>
 <text x="42.00" y="48.00" font-family="Arial, Helvetica, sans-serif" font-size="28px" font-weight="bold" fill="#C43D40" text-anchor="start">Failure mode: probe mismatch</text>
-<text x="42.00" y="80.00" font-family="Arial, Helvetica, sans-serif" font-size="16px" font-weight="normal" fill="#17212B" text-anchor="start">Probe drift = 0.03 deg/cycle; logical-qubit drift = 0.01 deg/cycle; probe offset = 0.20 deg</text>
+<text x="42.00" y="80.00" font-family="Arial, Helvetica, sans-serif" font-size="16px" font-weight="normal" fill="#17212B" text-anchor="start">Probe drift = 0.03 deg/cycle; target-qubit drift = 0.01 deg/cycle; probe offset = 0.20 deg</text>
 <rect x="35.00" y="138.00" width="610.00" height="570.00" rx="12.00" fill="#F6F8FA" stroke="#E3E8ED"/>
 <text x="57.00" y="174.00" font-family="Arial, Helvetica, sans-serif" font-size="19px" font-weight="bold" fill="#17212B" text-anchor="start">Final state fidelity (higher is better)</text>
 <line x1="107.00" y1="563.00" x2="617.00" y2="563.00" stroke="#D9E0E7" stroke-width="1.00"/>

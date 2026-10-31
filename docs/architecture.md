@@ -2,9 +2,9 @@
 
 ## Scope
 
-PQEC is a simulation prototype for estimating coherent single-qubit pulse-angle drift from an auxiliary calibration qubit, then adjusting the next logical pulse. The controller receives probe readout history only. It never receives the logical qubit's state or the simulator's hidden error values.
+PQEC is a simulation prototype for estimating coherent single-qubit pulse-angle drift from an auxiliary probe qubit, then adjusting the next target operation. The controller receives probe readout history only. It never receives the target qubit's state or the simulator's hidden error values.
 
-The nominal shared-drift case assumes that the probe and logical qubit experience the same pulse-angle error trajectory. The independent-noise and probe-mismatch cases deliberately test that assumption.
+The nominal shared-drift case assumes that the probe and target qubit experience the same pulse-angle error trajectory. The independent-noise and probe-mismatch cases deliberately test that assumption.
 
 ## Data path
 
@@ -14,7 +14,7 @@ flowchart LR
     E --> W[Rolling history: up to 16 checkpoints]
     W --> F[Guarded linear forecast for next cycle]
     F --> C[Command Rx: 90 degrees minus forecast]
-    C --> L[Logical qubit]
+    C --> L[Target qubit]
     D[Control error trajectory] --> L
     D --> P[Separate auxiliary probe sequence]
     P --> R[Y-basis measurement]
@@ -26,13 +26,13 @@ The dashed path is used only to calculate simulation metrics after the run. It i
 
 ## Probe and estimator
 
-At each checkpoint, the simulator prepares a separate probe in $|+y\rangle$, applies $m=13$ rotations $R_x(90^\circ+\delta_p)$, then measures along Y by applying $S^\dagger$, H, and computational-basis readout. Each checkpoint uses the configured number of shots. A startup checkpoint is taken before the logical sequence; later checkpoints follow the configured interval.
+At each checkpoint, the simulator prepares the auxiliary probe in $|+y\rangle$, applies $m=13$ rotations $R_x(90^\circ+\delta_p)$, then measures along Y by applying $S^\dagger$, H, and computational-basis readout. Each checkpoint uses the configured number of shots. A startup checkpoint is taken before the target sequence; later checkpoints follow the configured interval.
 
 The readout counts are corrected using the configured symmetric readout-error estimate. The signed angle estimate is recovered from the Y-basis probability. Details and equations are in [the mathematical model](mathematical_model.md).
 
 ## Controllers
 
-- **Reactive last probe:** for a logical pulse, subtract the newest probe estimate whose checkpoint precedes that pulse.
+- **Reactive last probe:** for a target operation, subtract the newest probe estimate whose checkpoint precedes that operation.
 - **Predictive linear:** fit a line to up to the latest 16 probe estimates and extrapolate it to the next pulse.
 - **Guarded PQEC:** fit the same rolling line, but suppress weak trends and shrink stronger slopes. The forecast is anchored to the latest measurement. When the trend is not supported, it falls back to the latest reading.
 

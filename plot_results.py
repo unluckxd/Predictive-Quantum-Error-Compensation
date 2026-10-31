@@ -421,7 +421,7 @@ def plot_probe_mismatch_failure(
     svg.text(
         42,
         80,
-        "Probe drift = 0.03 deg/cycle; logical-qubit drift = 0.01 deg/cycle; probe offset = 0.20 deg",
+        "Probe drift = 0.03 deg/cycle; target-qubit drift = 0.01 deg/cycle; probe offset = 0.20 deg",
         16,
         COLORS["ink"],
     )

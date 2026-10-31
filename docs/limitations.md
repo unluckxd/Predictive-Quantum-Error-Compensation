@@ -2,9 +2,9 @@
 
 ## Evidence boundary
 
-PQEC is a **simulation-validated prototype, not hardware-validated quantum error correction**. The simulator has one unencoded qubit and repeated X-axis rotations. It has no syndrome extraction, error-correcting code, logical encoding, code distance, or hardware run. The results establish behavior only for the stated model and seed schedule.
+PQEC is a **simulation-validated prototype, not hardware-validated quantum error correction**. The simulator has one unencoded target qubit and repeated X-axis rotations. It has no syndrome extraction, qubit encoding, code distance, or hardware run. The results establish behavior only for the stated model and seed schedule.
 
-The model excludes decoherence, leakage, crosstalk, spatially varying pulse errors beyond the explicit probe-mismatch case, calibration drift outside the specified trajectories, measurement backaction on the logical qubit, feedback latency, and the cost of obtaining a hardware state-fidelity estimate. The statevector is used to score fidelity exactly in simulation; fidelity is not inferred from output measurement shots.
+The model excludes decoherence, leakage, crosstalk, spatially varying pulse errors beyond the explicit probe-mismatch case, calibration drift outside the specified trajectories, measurement backaction on the target qubit, feedback latency, and the cost of obtaining a hardware state-fidelity estimate. The statevector is used to score fidelity exactly in simulation; fidelity is not inferred from output measurement shots.
 
 ## Primary guarded-PQEC results at the full budget
 
@@ -22,16 +22,16 @@ The gate-level metrics do not improve: guarded PQEC has higher RMS gate-angle er
 
 ## Explicit failure: probe mismatch
 
-In this stress case, the logical qubit drifts by 0.01° per cycle, while the probe drifts by 0.03° per cycle and begins 0.20° away from the logical error. Probe-local noise has a 0.05° standard deviation; actual probe readout error is 2%, while the controller assumes 1%.
+In this stress case, the target qubit drifts by 0.01° per cycle, while the probe drifts by 0.03° per cycle and begins 0.20° away from the target error. Probe-local noise has a 0.05° standard deviation; actual probe readout error is 2%, while the controller assumes 1%.
 
 | Full-budget mean | Reactive last probe | Guarded PQEC |
 | --- | ---: | ---: |
 | Final state fidelity | 0.845788 | 0.836495 |
 | RMS cumulative error | 21.9328° | 22.7294° |
 
-The paired final-fidelity difference is −0.009292 (95% CI [−0.009397, −0.009190], global Holm p=0.0090). The cumulative-error difference is +0.7966° (95% CI [+0.7849°, +0.8080°], global Holm p=0.0090). This is a significant degradation under the tested mismatch model. The controller cannot infer from one probe's history that its drift differs from the logical qubit's drift.
+The paired final-fidelity difference is −0.009292 (95% CI [−0.009397, −0.009190], global Holm p=0.0090). The cumulative-error difference is +0.7966° (95% CI [+0.7849°, +0.8080°], global Holm p=0.0090). This is a significant degradation under the tested mismatch model. The controller cannot infer from one probe's history that its drift differs from the target qubit's drift.
 
-This failure is central to the interpretation: the predictor can forecast the probe's control error, but useful logical compensation requires the probe to remain a valid proxy for the logical control path.
+This failure is central to the interpretation: the predictor can forecast the probe's control error, but useful compensation requires the probe to remain a valid proxy for the target qubit's control path.
 
 ## Measurement budget and implementation caveats
 
@@ -39,13 +39,13 @@ Among reduced-budget settings, 512 shots every 4 cycles (8,704 probe shots per 6
 
 At the full budget, the active probe path uses 65 checkpoints × 4,096 shots = 266,240 probe shots and 3,461,120 modeled probe rotations per sequence (13 rotations per shot). These counts exclude any real-device preparation/readout latency. The simulator's Python controller timing is not a hardware feedback-latency measurement.
 
-The randomized-compiling comparison is a simplified sign-randomization baseline. It does not implement full randomized compiling with circuit-level Pauli insertion, compensating compilation, and Pauli-frame tracking. The oracle method has access to the true upcoming logical error and is an unattainable upper bound, not a deployable controller.
+The randomized-compiling comparison is a simplified sign-randomization baseline. It does not implement full randomized compiling with circuit-level Pauli insertion, compensating compilation, and Pauli-frame tracking. The oracle method has access to the true upcoming target-qubit error and is an unattainable upper bound, not a deployable controller.
 
 ## What remains untested
 
 - Generalization to new seeds, devices, qubit pairs, pulse families, and drift spectra.
 - Robustness to less frequent and less accurate probe readout on a real platform.
-- Probe-to-logical transfer under spatially varying control errors and crosstalk.
+- Probe-to-target transfer under spatially varying control errors and crosstalk.
 - End-to-end benefit after feedback latency, calibration overhead, and output measurement cost.
-- Any improvement to encoded logical error rates or fault-tolerant operation.
+- Any improvement to encoded-qubit error rates or fault-tolerant operation.
 

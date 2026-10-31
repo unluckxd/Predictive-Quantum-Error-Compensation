@@ -247,7 +247,7 @@ def main() -> None:
         ]
         print(
             f"\n=== {budget_id}: {shots} shots/checkpoint, "
-            f"one probe every {interval} logical pulses ===",
+            f"one probe every {interval} target operations ===",
             flush=True,
         )
         subprocess.run(command, check=True)

@@ -1,0 +1,315 @@
+{
+  "experiment_id": "pqec-aer-t1t2-sensitivity-v0.3",
+  "claim_scope": "stylized Qiskit Aer one-factor-at-a-time T1/T2 sensitivity; not hardware validation",
+  "design": "separate target/probe T1 and T2 sweeps; one physical parameter changes per condition; common random trajectories across conditions",
+  "seed_schedule": {
+    "base_seed": 20261031,
+    "seed_block_ids": [
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+    ],
+    "trials_per_seed_block": 25,
+    "seed_block_stride": 1000003,
+    "trial_stride": 1009,
+    "scenario_seed_offsets": {
+      "shared_drift": 0,
+      "white_noise": 100003,
+      "probe_mismatch": 200003
+    },
+    "probe_seed_offset": 700001,
+    "target_seed_offset": 900001,
+    "statistics_seed_offset": 4000000019,
+    "statistics_condition_stride": 1000003,
+    "statistics_method_stride": 1009,
+    "statistics_metric_stride": 97,
+    "statistics_seed_formula": "base_seed + statistics_seed_offset + condition_index*statistics_condition_stride + method_index*statistics_method_stride + metric_index*statistics_metric_stride"
+  },
+  "parameters": {
+    "cycles": 61,
+    "shots": 32,
+    "probe_repetitions": 5,
+    "probe_interval": 8,
+    "predictor_window": 16,
+    "trend_threshold": 2.0,
+    "min_trend_observations": 4,
+    "initial_error_deg": 1.2,
+    "drift_rate_deg_per_cycle": 0.025,
+    "drift_innovation_sigma_deg": 0.001,
+    "independent_control_noise_sigma_deg": 0.3,
+    "probe_mismatch_offset_deg": 0.2,
+    "probe_mismatch_extra_drift_deg_per_cycle": 0.015,
+    "ema_alpha_per_cycle": 0.25,
+    "kalman_acceleration_sigma_deg_per_cycle2": 0.002,
+    "kalman_initial_velocity_sigma_deg_per_cycle": 0.05,
+    "bootstrap_repetitions": 5000,
+    "sign_flip_repetitions": 20000
+  },
+  "noise": {
+    "target": {
+      "t1_us": 500.0,
+      "t2_us": 300.0,
+      "gate_duration_us": 0.025,
+      "depolarizing_probability": 0.001
+    },
+    "probe": {
+      "t1_us": 400.0,
+      "t2_us": 250.0,
+      "gate_duration_us": 0.025,
+      "depolarizing_probability": 0.0015
+    },
+    "probe_readout": {
+      "p_1_given_0": 0.02,
+      "p_0_given_1": 0.04,
+      "controller_calibration": "assumed known exactly; residual calibration mismatch is not swept in this Aer pilot"
+    },
+    "latency": {
+      "reset_duration_us": 0.2,
+      "readout_duration_us": 0.5,
+      "classical_controller_latency_us": 2.0,
+      "target_idle_model": "target waits during serial probe-shot acquisition and classical processing at each non-final checkpoint"
+    }
+  },
+  "probe_response_calibration": {
+    "points": 401,
+    "maximum_error_deg": 8.0,
+    "seed": 20261101,
+    "method": "Aer density-matrix response curve with the configured probe T1/T2, per-gate depolarization, and asymmetric readout matrix"
+  },
+  "conditions": [
+    {
+      "id": "target_t1_0p50x",
+      "label": "Target T1 250.0 us (0.5x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "target_t1",
+      "sweep_scale": 0.5,
+      "noise_overrides": {
+        "target": {
+          "t1_us": 250.0
+        }
+      }
+    },
+    {
+      "id": "target_t1_0p75x",
+      "label": "Target T1 375.0 us (0.75x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "target_t1",
+      "sweep_scale": 0.75,
+      "noise_overrides": {
+        "target": {
+          "t1_us": 375.0
+        }
+      }
+    },
+    {
+      "id": "shared_baseline",
+      "label": "Shared baseline (all T1/T2 at reference values)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "reference",
+      "sweep_scale": 1.0,
+      "noise_overrides": {}
+    },
+    {
+      "id": "target_t1_1p50x",
+      "label": "Target T1 750.0 us (1.5x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "target_t1",
+      "sweep_scale": 1.5,
+      "noise_overrides": {
+        "target": {
+          "t1_us": 750.0
+        }
+      }
+    },
+    {
+      "id": "target_t1_2p00x",
+      "label": "Target T1 1000.0 us (2.0x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "target_t1",
+      "sweep_scale": 2.0,
+      "noise_overrides": {
+        "target": {
+          "t1_us": 1000.0
+        }
+      }
+    },
+    {
+      "id": "target_t2_0p50x",
+      "label": "Target T2 150.0 us (0.5x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "target_t2",
+      "sweep_scale": 0.5,
+      "noise_overrides": {
+        "target": {
+          "t2_us": 150.0
+        }
+      }
+    },
+    {
+      "id": "target_t2_0p75x",
+      "label": "Target T2 225.0 us (0.75x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "target_t2",
+      "sweep_scale": 0.75,
+      "noise_overrides": {
+        "target": {
+          "t2_us": 225.0
+        }
+      }
+    },
+    {
+      "id": "target_t2_1p50x",
+      "label": "Target T2 450.0 us (1.5x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "target_t2",
+      "sweep_scale": 1.5,
+      "noise_overrides": {
+        "target": {
+          "t2_us": 450.0
+        }
+      }
+    },
+    {
+      "id": "target_t2_2p00x",
+      "label": "Target T2 600.0 us (2.0x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "target_t2",
+      "sweep_scale": 2.0,
+      "noise_overrides": {
+        "target": {
+          "t2_us": 600.0
+        }
+      }
+    },
+    {
+      "id": "probe_t1_0p50x",
+      "label": "Probe T1 200.0 us (0.5x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "probe_t1",
+      "sweep_scale": 0.5,
+      "noise_overrides": {
+        "probe": {
+          "t1_us": 200.0
+        }
+      }
+    },
+    {
+      "id": "probe_t1_0p75x",
+      "label": "Probe T1 300.0 us (0.75x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "probe_t1",
+      "sweep_scale": 0.75,
+      "noise_overrides": {
+        "probe": {
+          "t1_us": 300.0
+        }
+      }
+    },
+    {
+      "id": "probe_t1_1p50x",
+      "label": "Probe T1 600.0 us (1.5x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "probe_t1",
+      "sweep_scale": 1.5,
+      "noise_overrides": {
+        "probe": {
+          "t1_us": 600.0
+        }
+      }
+    },
+    {
+      "id": "probe_t1_2p00x",
+      "label": "Probe T1 800.0 us (2.0x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "probe_t1",
+      "sweep_scale": 2.0,
+      "noise_overrides": {
+        "probe": {
+          "t1_us": 800.0
+        }
+      }
+    },
+    {
+      "id": "probe_t2_0p50x",
+      "label": "Probe T2 125.0 us (0.5x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "probe_t2",
+      "sweep_scale": 0.5,
+      "noise_overrides": {
+        "probe": {
+          "t2_us": 125.0
+        }
+      }
+    },
+    {
+      "id": "probe_t2_0p75x",
+      "label": "Probe T2 187.5 us (0.75x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "probe_t2",
+      "sweep_scale": 0.75,
+      "noise_overrides": {
+        "probe": {
+          "t2_us": 187.5
+        }
+      }
+    },
+    {
+      "id": "probe_t2_1p50x",
+      "label": "Probe T2 375.0 us (1.5x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "probe_t2",
+      "sweep_scale": 1.5,
+      "noise_overrides": {
+        "probe": {
+          "t2_us": 375.0
+        }
+      }
+    },
+    {
+      "id": "probe_t2_2p00x",
+      "label": "Probe T2 500.0 us (2.0x)",
+      "scenario": "shared_drift",
+      "probe_mismatch_scale": 0.0,
+      "sweep_factor": "probe_t2",
+      "sweep_scale": 2.0,
+      "noise_overrides": {
+        "probe": {
+          "t2_us": 500.0
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "directory": "results/pqec_v03/aer_t1t2"
+  },
+  "sensitivity_analysis": {
+    "reference_condition_id": "shared_baseline",
+    "statistics_seed_offset": 6000000011,
+    "statistics_condition_stride": 1000003,
+    "statistics_method_stride": 1009,
+    "statistics_metric_stride": 97,
+    "statistics_seed_formula": "bootstrap = base_seed + statistics_seed_offset + non_reference_condition_index*statistics_condition_stride + method_index*statistics_method_stride + metric_index*statistics_metric_stride; sign_flip = bootstrap + 71117",
+    "familywise_correction": "Holm correction across all condition-level predictor-versus-reactive tests and paired effect-change-versus-reference contrasts in this sweep"
+  }
+}

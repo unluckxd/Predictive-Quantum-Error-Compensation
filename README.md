@@ -2,7 +2,7 @@
 
 **Status: simulation-validated prototype; not hardware-validated quantum error correction.**
 
-This repository contains the analytic v0.2/v0.3 single-qubit studies and separate Qiskit Aer noise-model studies (Aer v0.1/v0.2). A separately prepared auxiliary probe qubit supplies measurements; a classical controller uses their history to adjust the next target operation. The controller does not measure the target qubit's state. The results were generated from the project's own configurations and simulator runs; publications listed under Related Work provide context and are not used as input data.
+This repository contains the analytic v0.2/v0.3 single-qubit studies and separate Qiskit Aer noise-model studies (Aer v0.1/v0.2 plus PQEC v0.3 T1/T2 and feedback-latency sensitivity sweeps). A separately prepared auxiliary probe qubit supplies measurements; a classical controller uses their history to adjust the next target operation. The controller does not measure the target qubit's state. The results were generated from the project's own configurations and simulator runs; publications listed under Related Work provide context and are not used as input data.
 
 The scope is deliberately narrow: repeated single-qubit Rx gates, finite-shot probe readout, and explicit shared-drift, independent-noise, and probe-mismatch cases. There is no encoded qubit, entangled probe pair, or hardware experiment.
 
@@ -101,6 +101,14 @@ Guarded PQEC shows no corrected sequence-level advantage over reactive control i
 
 The full [Aer v0.2 report](docs/aer_noise_v02.md) documents the model and all statistics. Full comparison figures are available for [final fidelity](figures/aer_noise_v02_final_fidelity.svg) and [cumulative angle error](figures/aer_noise_v02_cumulative_error.svg). These are simulation results, not a hardware claim.
 
+## PQEC v0.3 Aer sensitivity sweeps
+
+The v0.3 follow-up keeps the controller methods fixed and varies one physical-model parameter at a time. The T1/T2 sweep tests target T1, target T2, probe T1, and probe T2 separately at five levels each, with one shared baseline and 200 paired trajectories per condition. The latency sweep tests 0, 2, 10, and 50 µs of classical feedback delay while holding probe shots at 32 and the checkpoint interval at eight cycles.
+
+No guarded-PQEC final-fidelity advantage over reactive control survives the combined Holm correction in either sweep. Its per-gate residual is higher in every condition. In this particular Aer model, active controllers' final fidelity rises with modeled idle time, consistent with T1 relaxation partly damping the selected sequence's coherent drift. This is a sequence-specific simulator effect, not evidence that real-device latency is beneficial. The error trajectory does not continue to drift during the added wall-clock wait.
+
+See the [full v0.3 report](docs/aer_sensitivity_v03.md), the [frozen version record](docs/pqec_v03.md), and [reproduction instructions](docs/reproducibility.md). The two exact configurations are [T1/T2](configs/aer_t1t2_sweep_v03.json) and [feedback latency](configs/aer_feedback_latency_sweep_v03.json); per-run CSVs, seed manifests, calibrations, statistics, and environment snapshots are under `results/pqec_v03/`. The [SHA-256 manifest](results/pqec_v03/SHA256SUMS.txt) records hashes for the frozen artifacts.
+
 ## Qiskit Aer noise-model pilot (v0.1, archived)
 
 The separate Aer pilot adds heterogeneous target/probe T1 and T2, per-gate depolarization, asymmetric probe readout error, finite-shot probe measurements, and explicit target idling during serial probe acquisition and controller latency. Its stylized noise values are frozen in [the Aer configuration](configs/aer_noise_v01.json); they are not copied from a particular device.
@@ -190,7 +198,7 @@ The experiment configurations, seed schedule, CSV inventory, and reproduction de
 
 ## Limitations
 
-The v0.2/v0.3 studies use an analytic single-qubit model. The Aer v0.1/v0.2 studies add stylized T1/T2 relaxation, depolarizing gate channels, asymmetric probe readout, and modeled target waiting time; v0.2 expands the paired seed blocks and sweeps probe-target mismatch from 0% to 100%. These Aer parameters remain illustrative and omit leakage, crosstalk, correlated environmental noise, pulse shaping, calibration uncertainty, and several other device effects. Target-state fidelity in both simulation tracks is computed from simulator state; it is not estimated from hardware readout shots.
+The v0.2/v0.3 studies use an analytic single-qubit model. The Aer v0.1/v0.2 studies add stylized T1/T2 relaxation, depolarizing gate channels, asymmetric probe readout, and modeled target waiting time; v0.2 expands the paired seed blocks and sweeps probe-target mismatch from 0% to 100%. The PQEC v0.3 Aer follow-up independently sweeps target/probe T1/T2 and controller latency, but uses project-selected values rather than device-derived calibration distributions. These Aer models remain illustrative and omit leakage, crosstalk, correlated environmental noise, pulse shaping, calibration uncertainty, and several other device effects. Target-state fidelity in both simulation tracks is computed from simulator state; it is not estimated from hardware readout shots.
 
 The probe-mismatch result shows the central transfer assumption: the probe must track the target qubit’s control error. A single probe cannot diagnose its own mismatch from its measurement history alone. Independent random noise also receives no universal predictive benefit. The randomized-compiling entry is only a simplified sign-flip baseline, not a full circuit-level implementation. The [methodology audit](docs/methodology_audit.md) records the statistical-unit assumption, tuning-history limitation, comparison scope, sensitivity gaps, and reproducibility setup.
 

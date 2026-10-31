@@ -31,8 +31,10 @@ To run the optional Qiskit backend, install it before starting the scripts with 
 - [`robustness_v03.json`](../configs/robustness_v03.json): 35 one-factor-at-a-time conditions, 100 trials in each of five new seed blocks (IDs 2–6), six predictors plus a reactive baseline, 5,000 paired bootstrap resamples, and 50,000 sign flips per condition.
 - [`aer_noise_v01.json`](../configs/aer_noise_v01.json): four Qiskit Aer conditions, 100 paired trials in each of five new seed blocks (IDs 7–11), a reactive baseline and six predictors, 5,000 bootstrap resamples, and 20,000 sign flips per comparison.
 - [`aer_noise_v02.json`](../configs/aer_noise_v02.json): eight Qiskit Aer conditions, 200 paired trials per condition in eight non-overlapping seed blocks (IDs 12–19), including a five-level 0–100% control-mismatch sweep, 5,000 bootstrap resamples, and 20,000 sign flips per comparison.
+- [`aer_t1t2_sweep_v03.json`](../configs/aer_t1t2_sweep_v03.json): 17 conditions covering four isolated target/probe T1/T2 factors, 200 paired trajectories per condition, and 5,000 bootstrap resamples plus 20,000 sign flips.
+- [`aer_feedback_latency_sweep_v03.json`](../configs/aer_feedback_latency_sweep_v03.json): four controller-latency levels (0, 2, 10, and 50 µs), with shots and checkpoint schedule fixed, 200 paired trajectories per condition, and the same inference settings.
 
-The configurations state their experiment ID, claim scope, base seed, seed offsets/strides, statistics seed formula, and model parameters. The saved v0.2 CSVs were produced with the analytic fallback. The historical v0.1 Qiskit CSV files are separate and should not be combined with the v0.2 tables. The v0.3 sweep uses the analytic state model; the separately configured Aer noise-model pilot is not a hardware result.
+The configurations state their experiment ID, claim scope, base seed, seed offsets/strides, statistics seed formula, and model parameters. The saved v0.2 CSVs were produced with the analytic fallback. The historical v0.1 Qiskit CSV files are separate and should not be combined with the v0.2 tables. The analytic robustness study and the Aer v0.3 sensitivity runs are separate experiments: the former uses the analytic state model, while the latter use Qiskit Aer density-matrix simulation. Each has its own configuration and output directory; neither is a hardware result.
 
 ## Seed schedule
 
@@ -110,6 +112,10 @@ python plot_aer_results.py
 python pqec_aer_sweep.py --config configs/aer_noise_v02.json
 python plot_aer_results.py --results-dir results/aer_noise_v02 --output-prefix aer_noise_v02
 python plot_aer_mismatch.py
+python pqec_aer_sweep.py --config configs/aer_t1t2_sweep_v03.json
+python pqec_aer_sweep.py --config configs/aer_feedback_latency_sweep_v03.json
+python plot_aer_sensitivity_v03.py
+python freeze_pqec_v03.py
 python -m unittest discover -s tests -v
 ```
 
@@ -119,7 +125,7 @@ Aer v0.1 uses the original five-block design; v0.2 adds eight new blocks and a g
 base_seed + scenario_offset + seed_block_id*seed_block_stride + trial*trial_stride
 ```
 
-The probe and target Aer seeds add their configured offsets to the trajectory seed. The output manifest records all three seeds per condition/block/trial. Statistics seeds use the condition, method, and metric indices according to the formula in the JSON configuration. Both Aer versions use 5,000 bootstrap resamples and 20,000 sign-flip patterns; Holm correction covers the 72 tests in v0.1 and the 144 tests in v0.2 separately. The bootstrap intervals are not multiplicity-adjusted.
+The probe and target Aer seeds add their configured offsets to the trajectory seed. The output manifest records all three seeds per condition/block/trial. Statistics seeds use the condition, method, and metric indices according to the formula in the JSON configuration. Aer v0.1 and v0.2 use 5,000 bootstrap resamples and 20,000 sign-flip patterns; Holm correction covers the 72 tests in v0.1 and the 144 tests in v0.2 separately. The v0.3 T1/T2 sweep applies one correction across 306 condition-level tests and 288 paired effect-change contrasts (594 total); the latency sweep jointly corrects 72 condition-level tests and 54 effect-change contrasts (126 total). Bootstrap intervals are not multiplicity-adjusted.
 
 The saved Aer outputs are:
 
@@ -141,6 +147,24 @@ The saved Aer outputs are:
 | `results/aer_noise_v02/pqec_aer_environment.json` | Python and library versions and total elapsed runtime |
 
 The [Aer v0.2 report](aer_noise_v02.md) is the expanded study; [Aer v0.1](aer_noise_v01.md) remains as its reproducible predecessor.
+
+The frozen PQEC v0.3 follow-up consists of two separate Aer runs. Each uses seed blocks 20–27 (25 trials per block), disjoint from the earlier Aer blocks, and shares the same per-trial coherent-error trajectories across factor levels. Each sweep applies one Holm correction across both its condition-level predictor-versus-reactive tests and its paired effect-change contrasts against the reference condition.
+
+| Path | Contents |
+| --- | --- |
+| `results/pqec_v03/aer_t1t2/pqec_aer_runs.csv` | 27,200 per-method trial rows from 17 T1/T2 conditions |
+| `results/pqec_v03/aer_t1t2/pqec_aer_paired_stats.csv` | 306 condition-level paired tests |
+| `results/pqec_v03/aer_t1t2/pqec_aer_sensitivity_paired_stats.csv` | 288 paired changes in predictor effect versus the shared baseline |
+| `results/pqec_v03/aer_t1t2/pqec_aer_seed_manifest.csv` | 3,400 trajectory and simulator seed records |
+| `results/pqec_v03/aer_t1t2/pqec_aer_probe_calibration.csv` | Condition-specific probe response curves, recalibrated under each probe T1/T2 setting |
+| `results/pqec_v03/aer_t1t2/pqec_aer_config_snapshot.json` and `pqec_aer_environment.json` | Exact run configuration and software/runtime record |
+| `results/pqec_v03/aer_latency/pqec_aer_runs.csv` | 6,400 per-method trial rows from four feedback-latency levels |
+| `results/pqec_v03/aer_latency/pqec_aer_paired_stats.csv` | 72 condition-level paired tests |
+| `results/pqec_v03/aer_latency/pqec_aer_sensitivity_paired_stats.csv` | 54 paired changes in predictor effect versus the 2 µs reference |
+| `results/pqec_v03/aer_latency/pqec_aer_seed_manifest.csv` | 800 trajectory and simulator seed records |
+| `results/pqec_v03/aer_latency/pqec_aer_probe_calibration.csv`, config snapshot, and environment record | Probe calibration, exact run configuration, and software/runtime record |
+
+The complete v0.3 bundle, including both SVG/PNG sensitivity figures, is indexed in the [version manifest](../results/pqec_v03/version_manifest.json) and covered by its [SHA-256 file](../results/pqec_v03/SHA256SUMS.txt). The frozen scope and result interpretation are in [PQEC v0.3](pqec_v03.md).
 
 ## Figures
 

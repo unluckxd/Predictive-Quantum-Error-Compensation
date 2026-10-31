@@ -1,0 +1,490 @@
+{
+  "schema_version": 1,
+  "version": "PQEC v0.3",
+  "freeze_date": "2026-10-31",
+  "status": "frozen_simulation_bundle",
+  "claim_scope": "Simulation-validated prototype; not hardware-validated QEC and not encoded-qubit error correction.",
+  "studies": {
+    "analytic_robustness": {
+      "experiment_id": "pqec-robustness-v0.3",
+      "claim_scope": "analytic single-qubit simulation; no hardware or Qiskit Aer validation",
+      "model": "analytic single-qubit state simulation; separate from Aer runs",
+      "configuration": "configs/robustness_v03.json",
+      "output_directory": "results/robustness_v03",
+      "condition_count": 35,
+      "seed_block_ids": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "trials_per_seed_block": 100,
+      "paired_trajectories_per_condition": 500,
+      "total_paired_trajectories": 17500,
+      "per_method_rows": 122500,
+      "primary_paired_tests": 630,
+      "probe_shots_per_checkpoint_reference": 512,
+      "checkpoint_interval_reference_target_cycles": 4
+    },
+    "aer_t1t2_sensitivity": {
+      "experiment_id": "pqec-aer-t1t2-sensitivity-v0.3",
+      "claim_scope": "stylized Qiskit Aer one-factor-at-a-time T1/T2 sensitivity; not hardware validation",
+      "model": "Qiskit Aer density-matrix simulation; not hardware validation",
+      "configuration": "configs/aer_t1t2_sweep_v03.json",
+      "output_directory": "results/pqec_v03/aer_t1t2",
+      "condition_ids": [
+        "target_t1_0p50x",
+        "target_t1_0p75x",
+        "shared_baseline",
+        "target_t1_1p50x",
+        "target_t1_2p00x",
+        "target_t2_0p50x",
+        "target_t2_0p75x",
+        "target_t2_1p50x",
+        "target_t2_2p00x",
+        "probe_t1_0p50x",
+        "probe_t1_0p75x",
+        "probe_t1_1p50x",
+        "probe_t1_2p00x",
+        "probe_t2_0p50x",
+        "probe_t2_0p75x",
+        "probe_t2_1p50x",
+        "probe_t2_2p00x"
+      ],
+      "condition_count": 17,
+      "seed_block_ids": [
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ],
+      "trials_per_seed_block": 25,
+      "paired_trajectories_per_condition": 200,
+      "total_paired_trajectories": 3400,
+      "per_method_rows": 27200,
+      "methods_per_trajectory": 8,
+      "probe_shots_per_checkpoint": 32,
+      "checkpoint_interval_target_cycles": 8,
+      "sweep_conditions": [
+        {
+          "condition_id": "target_t1_0p50x",
+          "factor": "target_t1",
+          "scale": 0.5,
+          "value_us": null,
+          "noise_overrides": {
+            "target": {
+              "t1_us": 250.0
+            }
+          }
+        },
+        {
+          "condition_id": "target_t1_0p75x",
+          "factor": "target_t1",
+          "scale": 0.75,
+          "value_us": null,
+          "noise_overrides": {
+            "target": {
+              "t1_us": 375.0
+            }
+          }
+        },
+        {
+          "condition_id": "shared_baseline",
+          "factor": "reference",
+          "scale": 1.0,
+          "value_us": null,
+          "noise_overrides": {}
+        },
+        {
+          "condition_id": "target_t1_1p50x",
+          "factor": "target_t1",
+          "scale": 1.5,
+          "value_us": null,
+          "noise_overrides": {
+            "target": {
+              "t1_us": 750.0
+            }
+          }
+        },
+        {
+          "condition_id": "target_t1_2p00x",
+          "factor": "target_t1",
+          "scale": 2.0,
+          "value_us": null,
+          "noise_overrides": {
+            "target": {
+              "t1_us": 1000.0
+            }
+          }
+        },
+        {
+          "condition_id": "target_t2_0p50x",
+          "factor": "target_t2",
+          "scale": 0.5,
+          "value_us": null,
+          "noise_overrides": {
+            "target": {
+              "t2_us": 150.0
+            }
+          }
+        },
+        {
+          "condition_id": "target_t2_0p75x",
+          "factor": "target_t2",
+          "scale": 0.75,
+          "value_us": null,
+          "noise_overrides": {
+            "target": {
+              "t2_us": 225.0
+            }
+          }
+        },
+        {
+          "condition_id": "target_t2_1p50x",
+          "factor": "target_t2",
+          "scale": 1.5,
+          "value_us": null,
+          "noise_overrides": {
+            "target": {
+              "t2_us": 450.0
+            }
+          }
+        },
+        {
+          "condition_id": "target_t2_2p00x",
+          "factor": "target_t2",
+          "scale": 2.0,
+          "value_us": null,
+          "noise_overrides": {
+            "target": {
+              "t2_us": 600.0
+            }
+          }
+        },
+        {
+          "condition_id": "probe_t1_0p50x",
+          "factor": "probe_t1",
+          "scale": 0.5,
+          "value_us": null,
+          "noise_overrides": {
+            "probe": {
+              "t1_us": 200.0
+            }
+          }
+        },
+        {
+          "condition_id": "probe_t1_0p75x",
+          "factor": "probe_t1",
+          "scale": 0.75,
+          "value_us": null,
+          "noise_overrides": {
+            "probe": {
+              "t1_us": 300.0
+            }
+          }
+        },
+        {
+          "condition_id": "probe_t1_1p50x",
+          "factor": "probe_t1",
+          "scale": 1.5,
+          "value_us": null,
+          "noise_overrides": {
+            "probe": {
+              "t1_us": 600.0
+            }
+          }
+        },
+        {
+          "condition_id": "probe_t1_2p00x",
+          "factor": "probe_t1",
+          "scale": 2.0,
+          "value_us": null,
+          "noise_overrides": {
+            "probe": {
+              "t1_us": 800.0
+            }
+          }
+        },
+        {
+          "condition_id": "probe_t2_0p50x",
+          "factor": "probe_t2",
+          "scale": 0.5,
+          "value_us": null,
+          "noise_overrides": {
+            "probe": {
+              "t2_us": 125.0
+            }
+          }
+        },
+        {
+          "condition_id": "probe_t2_0p75x",
+          "factor": "probe_t2",
+          "scale": 0.75,
+          "value_us": null,
+          "noise_overrides": {
+            "probe": {
+              "t2_us": 187.5
+            }
+          }
+        },
+        {
+          "condition_id": "probe_t2_1p50x",
+          "factor": "probe_t2",
+          "scale": 1.5,
+          "value_us": null,
+          "noise_overrides": {
+            "probe": {
+              "t2_us": 375.0
+            }
+          }
+        },
+        {
+          "condition_id": "probe_t2_2p00x",
+          "factor": "probe_t2",
+          "scale": 2.0,
+          "value_us": null,
+          "noise_overrides": {
+            "probe": {
+              "t2_us": 500.0
+            }
+          }
+        }
+      ],
+      "primary_paired_tests": 306,
+      "paired_effect_change_tests": 288,
+      "holm_family_size": 594,
+      "bootstrap_resamples_per_test": 5000,
+      "sign_flip_patterns_per_test": 20000,
+      "probe_calibration_records": 6817,
+      "software_environment": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+        "qiskit": "2.6.1",
+        "qiskit_aer": "0.18.2",
+        "numpy": "2.5.4",
+        "matplotlib": "3.11.2",
+        "aer_method": "density_matrix",
+        "elapsed_wall_seconds": 88.05262209999637
+      },
+      "outputs": {
+        "per_method_runs": "results/pqec_v03/aer_t1t2/pqec_aer_runs.csv",
+        "summary": "results/pqec_v03/aer_t1t2/pqec_aer_summary.csv",
+        "paired_statistics": "results/pqec_v03/aer_t1t2/pqec_aer_paired_stats.csv",
+        "paired_effect_change_statistics": "results/pqec_v03/aer_t1t2/pqec_aer_sensitivity_paired_stats.csv",
+        "seed_manifest": "results/pqec_v03/aer_t1t2/pqec_aer_seed_manifest.csv",
+        "probe_calibration": "results/pqec_v03/aer_t1t2/pqec_aer_probe_calibration.csv",
+        "configuration_snapshot": "results/pqec_v03/aer_t1t2/pqec_aer_config_snapshot.json",
+        "environment_record": "results/pqec_v03/aer_t1t2/pqec_aer_environment.json"
+      }
+    },
+    "aer_feedback_latency_sensitivity": {
+      "experiment_id": "pqec-aer-feedback-latency-sensitivity-v0.3",
+      "claim_scope": "stylized Qiskit Aer one-factor-at-a-time controller-latency sensitivity; not hardware validation",
+      "model": "Qiskit Aer density-matrix simulation; not hardware validation",
+      "configuration": "configs/aer_feedback_latency_sweep_v03.json",
+      "output_directory": "results/pqec_v03/aer_latency",
+      "condition_ids": [
+        "latency_0p0us",
+        "latency_2p0us",
+        "latency_10p0us",
+        "latency_50p0us"
+      ],
+      "condition_count": 4,
+      "seed_block_ids": [
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ],
+      "trials_per_seed_block": 25,
+      "paired_trajectories_per_condition": 200,
+      "total_paired_trajectories": 800,
+      "per_method_rows": 6400,
+      "methods_per_trajectory": 8,
+      "probe_shots_per_checkpoint": 32,
+      "checkpoint_interval_target_cycles": 8,
+      "sweep_conditions": [
+        {
+          "condition_id": "latency_0p0us",
+          "factor": "classical_controller_latency_us",
+          "scale": null,
+          "value_us": 0.0,
+          "noise_overrides": {
+            "latency": {
+              "classical_controller_latency_us": 0.0
+            }
+          }
+        },
+        {
+          "condition_id": "latency_2p0us",
+          "factor": "classical_controller_latency_us",
+          "scale": null,
+          "value_us": 2.0,
+          "noise_overrides": {
+            "latency": {
+              "classical_controller_latency_us": 2.0
+            }
+          }
+        },
+        {
+          "condition_id": "latency_10p0us",
+          "factor": "classical_controller_latency_us",
+          "scale": null,
+          "value_us": 10.0,
+          "noise_overrides": {
+            "latency": {
+              "classical_controller_latency_us": 10.0
+            }
+          }
+        },
+        {
+          "condition_id": "latency_50p0us",
+          "factor": "classical_controller_latency_us",
+          "scale": null,
+          "value_us": 50.0,
+          "noise_overrides": {
+            "latency": {
+              "classical_controller_latency_us": 50.0
+            }
+          }
+        }
+      ],
+      "primary_paired_tests": 72,
+      "paired_effect_change_tests": 54,
+      "holm_family_size": 126,
+      "bootstrap_resamples_per_test": 5000,
+      "sign_flip_patterns_per_test": 20000,
+      "probe_calibration_records": 1604,
+      "software_environment": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+        "qiskit": "2.6.1",
+        "qiskit_aer": "0.18.2",
+        "numpy": "2.5.4",
+        "matplotlib": "3.11.2",
+        "aer_method": "density_matrix",
+        "elapsed_wall_seconds": 18.955005100000562
+      },
+      "outputs": {
+        "per_method_runs": "results/pqec_v03/aer_latency/pqec_aer_runs.csv",
+        "summary": "results/pqec_v03/aer_latency/pqec_aer_summary.csv",
+        "paired_statistics": "results/pqec_v03/aer_latency/pqec_aer_paired_stats.csv",
+        "paired_effect_change_statistics": "results/pqec_v03/aer_latency/pqec_aer_sensitivity_paired_stats.csv",
+        "seed_manifest": "results/pqec_v03/aer_latency/pqec_aer_seed_manifest.csv",
+        "probe_calibration": "results/pqec_v03/aer_latency/pqec_aer_probe_calibration.csv",
+        "configuration_snapshot": "results/pqec_v03/aer_latency/pqec_aer_config_snapshot.json",
+        "environment_record": "results/pqec_v03/aer_latency/pqec_aer_environment.json"
+      }
+    }
+  },
+  "interpretation": [
+    "The analytic robustness study reports conditional gains in selected common-drift settings.",
+    "Neither Aer v0.3 sensitivity sweep shows a corrected final-fidelity advantage for guarded PQEC over reactive last-probe control.",
+    "The guarded method has a larger RMS per-gate angle residual in every tested Aer v0.3 condition.",
+    "The latency sweep holds operation-indexed coherent drift fixed during additional wall-clock wait; its relaxation response is sequence- and simulator-specific."
+  ],
+  "reproduction_entry_points": [
+    "python pqec_robustness_sweep.py --config configs/robustness_v03.json",
+    "python pqec_aer_sweep.py --config configs/aer_t1t2_sweep_v03.json",
+    "python pqec_aer_sweep.py --config configs/aer_feedback_latency_sweep_v03.json",
+    "python plot_aer_sensitivity_v03.py"
+  ],
+  "artifact_files": [
+    "configs/aer_feedback_latency_sweep_v03.json",
+    "configs/aer_noise_v01.json",
+    "configs/aer_noise_v02.json",
+    "configs/aer_t1t2_sweep_v03.json",
+    "configs/budget_sweep_v02.json",
+    "configs/full_run_v02.json",
+    "configs/robustness_v03.json",
+    "docs/aer_noise_v01.md",
+    "docs/aer_noise_v02.md",
+    "docs/aer_sensitivity_v03.md",
+    "docs/architecture.md",
+    "docs/limitations.md",
+    "docs/mathematical_model.md",
+    "docs/methodology_audit.md",
+    "docs/pqec_v03.md",
+    "docs/reproducibility.md",
+    "docs/robustness_v03.md",
+    "figures/aer_noise_cumulative_error.png",
+    "figures/aer_noise_cumulative_error.svg",
+    "figures/aer_noise_final_fidelity.png",
+    "figures/aer_noise_final_fidelity.svg",
+    "figures/aer_noise_v02_cumulative_error.png",
+    "figures/aer_noise_v02_cumulative_error.svg",
+    "figures/aer_noise_v02_final_fidelity.png",
+    "figures/aer_noise_v02_final_fidelity.svg",
+    "figures/aer_noise_v02_mismatch.png",
+    "figures/aer_noise_v02_mismatch.svg",
+    "figures/aer_v03_latency_sensitivity.png",
+    "figures/aer_v03_latency_sensitivity.svg",
+    "figures/aer_v03_t1t2_sensitivity.png",
+    "figures/aer_v03_t1t2_sensitivity.svg",
+    "figures/budget_tradeoff.png",
+    "figures/budget_tradeoff.svg",
+    "figures/measurement_budget_sweep.png",
+    "figures/measurement_budget_sweep.svg",
+    "figures/pqec_vs_reactive_full_budget.png",
+    "figures/pqec_vs_reactive_full_budget.svg",
+    "figures/probe_mismatch_failure.png",
+    "figures/probe_mismatch_failure.svg",
+    "figures/probe_transfer_sweep.png",
+    "figures/probe_transfer_sweep.svg",
+    "figures/robustness_drift_sweep.png",
+    "figures/robustness_drift_sweep.svg",
+    "freeze_pqec_v03.py",
+    "plot_aer_mismatch.py",
+    "plot_aer_results.py",
+    "plot_aer_sensitivity_v03.py",
+    "plot_results.py",
+    "plot_robustness.py",
+    "plotting_utils.py",
+    "pqec_aer_sweep.py",
+    "pqec_baselines.py",
+    "pqec_budget_sweep.py",
+    "pqec_controller.py",
+    "pqec_robustness_sweep.py",
+    "pqec_single_qubit.py",
+    "README.md",
+    "requirements-aer.txt",
+    "requirements-plotting.txt",
+    "requirements-robustness.txt",
+    "requirements.txt",
+    "results/pqec_v03/aer_latency/pqec_aer_config_snapshot.json",
+    "results/pqec_v03/aer_latency/pqec_aer_environment.json",
+    "results/pqec_v03/aer_latency/pqec_aer_paired_stats.csv",
+    "results/pqec_v03/aer_latency/pqec_aer_probe_calibration.csv",
+    "results/pqec_v03/aer_latency/pqec_aer_runs.csv",
+    "results/pqec_v03/aer_latency/pqec_aer_seed_manifest.csv",
+    "results/pqec_v03/aer_latency/pqec_aer_sensitivity_paired_stats.csv",
+    "results/pqec_v03/aer_latency/pqec_aer_summary.csv",
+    "results/pqec_v03/aer_t1t2/pqec_aer_config_snapshot.json",
+    "results/pqec_v03/aer_t1t2/pqec_aer_environment.json",
+    "results/pqec_v03/aer_t1t2/pqec_aer_paired_stats.csv",
+    "results/pqec_v03/aer_t1t2/pqec_aer_probe_calibration.csv",
+    "results/pqec_v03/aer_t1t2/pqec_aer_runs.csv",
+    "results/pqec_v03/aer_t1t2/pqec_aer_seed_manifest.csv",
+    "results/pqec_v03/aer_t1t2/pqec_aer_sensitivity_paired_stats.csv",
+    "results/pqec_v03/aer_t1t2/pqec_aer_summary.csv",
+    "results/robustness_v03/pqec_robustness_paired_stats.csv",
+    "results/robustness_v03/pqec_robustness_runs.csv",
+    "results/robustness_v03/pqec_robustness_seed_manifest.csv",
+    "results/robustness_v03/pqec_robustness_stats_seed_manifest.csv",
+    "results/robustness_v03/pqec_robustness_summary.csv",
+    "tests/test_pqec_aer.py",
+    "tests/test_pqec_baselines.py",
+    "tests/test_pqec_controller.py",
+    "tests/test_pqec_robustness.py"
+  ],
+  "artifact_file_count_excluding_manifests": 86,
+  "sha256_file": "results/pqec_v03/SHA256SUMS.txt",
+  "checksum_rule": "SHA256SUMS.txt covers every artifact_file and this version_manifest.json; it does not hash itself."
+}

@@ -61,12 +61,16 @@ The reactive controller had nearly the same or better sequence-level outcomes th
 
 The expanded Aer run uses 200 paired trials per condition across eight new seed blocks and tests mismatch from 0% to 100%. Guarded PQEC again has no corrected sequence-level advantage in any condition. Its final-fidelity difference becomes significantly negative at the tested 50%, 75%, and 100% mismatch levels after Holm correction over all 144 tests; the 25% result does not pass that threshold. Its RMS per-operation coherent-angle residual is higher than reactive control in all eight conditions (global Holm p = 0.0072 each). The RMS cumulative-angle differences do not survive global correction. Full results and the graded mismatch plot are in [the v0.2 report](aer_noise_v02.md).
 
+## PQEC v0.3 Aer sensitivity
+
+The v0.3 follow-up varies target/probe T1 and T2 independently and tests four feedback-delay settings at a fixed 32-shot probe budget. It again finds no corrected final-fidelity advantage for guarded PQEC over reactive control; per-gate residual is higher in every condition. In the chosen channel and pulse sequence, longer idle relaxation increases active-controller final fidelity, which is consistent with relaxation damping some coherent error between probe checkpoints. The model keeps the coherent-error trajectory indexed by gate cycle, so it does not add drift during the extra wall-clock delay. This result is a model-specific idle-channel effect, not evidence that longer latency benefits a real device. See [the full v0.3 sensitivity report](aer_sensitivity_v03.md).
+
 ## What remains untested
 
 - Generalization to new seeds, devices, qubit pairs, pulse families, and drift spectra.
 - Robustness to less frequent and less accurate probe readout on a real platform.
 - Probe-to-target transfer under spatially varying control errors and crosstalk.
 - End-to-end benefit after feedback latency, calibration overhead, and output measurement cost.
-- Generalization of the stylized Aer pilot to device-derived T1/T2, pulse durations, readout calibration uncertainty, and realistic controller timing.
+- Generalization of the stylized Aer studies to device-derived T1/T2 distributions, pulse durations, readout calibration uncertainty, drift during wall-clock feedback delay, and realistic controller timing.
 - Any improvement to encoded-qubit error rates or fault-tolerant operation.
 

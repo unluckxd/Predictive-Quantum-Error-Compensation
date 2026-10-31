@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from copy import deepcopy
 import json
 import math
 from pathlib import Path
@@ -125,6 +126,29 @@ def build_noise_model(
         idle_error = thermal_relaxation_error(t1_us, t2_us, target_idle_us)
         model.add_quantum_error(idle_error, ["id"], [0])
     return model
+
+
+def resolve_condition_noise(
+    base_noise_config: dict[str, Any],
+    condition: dict[str, Any],
+) -> dict[str, Any]:
+    """Apply explicit per-condition overrides without mutating the base model."""
+    resolved = deepcopy(base_noise_config)
+    overrides = condition.get("noise_overrides", {})
+    if not isinstance(overrides, dict):
+        raise ValueError("noise_overrides must be a mapping of noise sections.")
+    for section, section_overrides in overrides.items():
+        if section not in resolved or not isinstance(resolved[section], dict):
+            raise ValueError(f"Unknown noise section in condition override: {section}")
+        if not isinstance(section_overrides, dict):
+            raise ValueError(f"Overrides for {section} must be a mapping.")
+        for parameter, value in section_overrides.items():
+            if parameter not in resolved[section]:
+                raise ValueError(
+                    f"Unknown {section} parameter in condition override: {parameter}"
+                )
+            resolved[section][parameter] = value
+    return resolved
 
 
 def build_probe_circuit(
@@ -548,6 +572,144 @@ def paired_statistics(
     return output
 
 
+def paired_sensitivity_statistics(
+    run_rows: list[dict[str, Any]],
+    conditions: list[dict[str, Any]],
+    seed_schedule: dict[str, Any],
+    parameters: dict[str, Any],
+    sensitivity_config: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Test changes in each predictor's paired effect against a reference condition."""
+    reference_condition_id = str(sensitivity_config["reference_condition_id"])
+    by_condition_pair: dict[
+        tuple[str, int, int], dict[str, dict[str, Any]]
+    ] = {}
+    for row in run_rows:
+        key = (
+            str(row["condition_id"]),
+            int(row["seed_block"]),
+            int(row["trial"]),
+        )
+        by_condition_pair.setdefault(key, {})[str(row["method"])] = row
+
+    reference_pairs = {
+        (block, trial): methods
+        for (condition_id, block, trial), methods in by_condition_pair.items()
+        if condition_id == reference_condition_id
+    }
+    non_reference = [
+        condition
+        for condition in conditions
+        if str(condition["id"]) != reference_condition_id
+    ]
+    output: list[dict[str, Any]] = []
+    base_seed = int(seed_schedule["base_seed"])
+    bootstrap_repetitions = int(parameters["bootstrap_repetitions"])
+    sign_flip_repetitions = int(parameters["sign_flip_repetitions"])
+    seed_offset = int(sensitivity_config["statistics_seed_offset"])
+    condition_stride = int(sensitivity_config["statistics_condition_stride"])
+    method_stride = int(sensitivity_config["statistics_method_stride"])
+    metric_stride = int(sensitivity_config["statistics_metric_stride"])
+
+    for condition_index, condition in enumerate(non_reference):
+        condition_id = str(condition["id"])
+        condition_pairs = {
+            (block, trial): methods
+            for (pair_condition, block, trial), methods in by_condition_pair.items()
+            if pair_condition == condition_id
+        }
+        common_keys = sorted(set(reference_pairs) & set(condition_pairs))
+        for method_index, method in enumerate(PREDICTOR_METHODS):
+            for metric_index, metric in enumerate(METRICS):
+                differences = np.asarray(
+                    [
+                        (
+                            float(condition_pairs[key][method][metric])
+                            - float(condition_pairs[key]["reactive_last_probe"][metric])
+                        )
+                        - (
+                            float(reference_pairs[key][method][metric])
+                            - float(reference_pairs[key]["reactive_last_probe"][metric])
+                        )
+                        for key in common_keys
+                        if {
+                            method,
+                            "reactive_last_probe",
+                        }.issubset(condition_pairs[key])
+                        and {
+                            method,
+                            "reactive_last_probe",
+                        }.issubset(reference_pairs[key])
+                    ],
+                    dtype=np.float64,
+                )
+                if len(differences) < 2:
+                    raise ValueError(
+                        f"Insufficient matched sensitivity pairs for {condition_id}/{method}/{metric}."
+                    )
+                bootstrap_seed = (
+                    base_seed
+                    + seed_offset
+                    + condition_index * condition_stride
+                    + method_index * method_stride
+                    + metric_index * metric_stride
+                )
+                sign_flip_seed = bootstrap_seed + 71_117
+                ci_low, ci_high = paired_bootstrap_ci(
+                    differences, bootstrap_seed, bootstrap_repetitions
+                )
+                p_value = paired_sign_flip_pvalue(
+                    differences, sign_flip_seed, sign_flip_repetitions
+                )
+                row: dict[str, Any] = {
+                    "reference_condition_id": reference_condition_id,
+                    "condition_id": condition_id,
+                    "scenario": condition["scenario"],
+                    "metric": metric,
+                    "comparison": (
+                        f"({method} - reactive) at {condition_id} minus "
+                        f"({method} - reactive) at {reference_condition_id}"
+                    ),
+                    "method": method,
+                    "n_paired_trajectories": len(differences),
+                    "mean_effect_change": float(differences.mean()),
+                    "bootstrap_95ci_low": ci_low,
+                    "bootstrap_95ci_high": ci_high,
+                    "paired_sign_flip_p": p_value,
+                    "holm_global_p": "",
+                    "bootstrap_seed": bootstrap_seed,
+                    "sign_flip_seed": sign_flip_seed,
+                    "bootstrap_repetitions": bootstrap_repetitions,
+                    "sign_flip_repetitions": sign_flip_repetitions,
+                }
+                for block in seed_schedule["seed_block_ids"]:
+                    block_values = [
+                        (
+                            float(condition_pairs[key][method][metric])
+                            - float(condition_pairs[key]["reactive_last_probe"][metric])
+                        )
+                        - (
+                            float(reference_pairs[key][method][metric])
+                            - float(reference_pairs[key]["reactive_last_probe"][metric])
+                        )
+                        for key in common_keys
+                        if key[0] == int(block)
+                        and {
+                            method,
+                            "reactive_last_probe",
+                        }.issubset(condition_pairs[key])
+                        and {
+                            method,
+                            "reactive_last_probe",
+                        }.issubset(reference_pairs[key])
+                    ]
+                    row[f"seed_block_{block}_mean_effect_change"] = mean(block_values)
+                output.append(row)
+
+    holm_adjust(output, "paired_sign_flip_p")
+    return output
+
+
 def summarize(
     run_rows: list[dict[str, Any]],
     conditions: list[dict[str, Any]],
@@ -631,6 +793,11 @@ def validate_config(config: dict[str, Any]) -> None:
     condition_ids = [condition["id"] for condition in config["conditions"]]
     if len(condition_ids) != len(set(condition_ids)):
         raise ValueError("Condition identifiers must be unique.")
+    sensitivity_config = config.get("sensitivity_analysis")
+    if sensitivity_config is not None and str(
+        sensitivity_config.get("reference_condition_id", "")
+    ) not in condition_ids:
+        raise ValueError("Sensitivity reference_condition_id must name a condition.")
     for condition in config["conditions"]:
         if condition["scenario"] not in SCENARIO_SEED_OFFSETS:
             raise ValueError(f"Unknown scenario in condition: {condition['scenario']}")
@@ -646,6 +813,28 @@ def validate_config(config: dict[str, Any]) -> None:
         mismatch_scale = float(condition.get("probe_mismatch_scale", 0.0))
         if not 0.0 <= mismatch_scale <= 1.0:
             raise ValueError("probe_mismatch_scale must be in [0, 1].")
+        condition_noise = resolve_condition_noise(config["noise"], condition)
+        for qubit_name in ("target", "probe"):
+            qubit = condition_noise[qubit_name]
+            t1_us = float(qubit["t1_us"])
+            t2_us = float(qubit["t2_us"])
+            gate_duration_us = float(qubit["gate_duration_us"])
+            depolarizing_probability = float(qubit["depolarizing_probability"])
+            if not (t1_us > 0.0 and 0.0 < t2_us <= 2.0 * t1_us):
+                raise ValueError(
+                    f"Invalid T1/T2 values in condition {condition['id']} for {qubit_name}."
+                )
+            if gate_duration_us <= 0.0 or not 0.0 <= depolarizing_probability <= 1.0:
+                raise ValueError(
+                    f"Invalid gate-noise values in condition {condition['id']} for {qubit_name}."
+                )
+        latency_us = float(
+            condition_noise["latency"]["classical_controller_latency_us"]
+        )
+        if not math.isfinite(latency_us) or latency_us < 0.0:
+            raise ValueError(
+                f"Invalid controller latency in condition {condition['id']}."
+            )
 
 
 def run_experiment(config: dict[str, Any]) -> dict[str, Any]:
@@ -657,45 +846,15 @@ def run_experiment(config: dict[str, Any]) -> dict[str, Any]:
     output_dir = Path(config["outputs"]["directory"])
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    probe_noise = build_noise_model(noise_config, "probe")
-    probe_simulator = AerSimulator(
-        method="density_matrix",
-        noise_model=probe_noise,
-        max_parallel_threads=1,
-    )
-    calibration = calibrate_probe_response(
-        probe_simulator,
-        noise_config,
-        parameters,
-        config["probe_response_calibration"],
-    )
-    calibration_rows = [
-        {
-            "probe_error_deg": float(error),
-            "expected_observed_p0": float(probability),
-        }
-        for error, probability in zip(
-            calibration.error_grid_deg,
-            calibration.observed_p0_grid,
-        )
-    ]
-    write_csv(output_dir / "pqec_aer_probe_calibration.csv", calibration_rows)
-
     cycles = int(parameters["cycles"])
     interval = int(parameters["probe_interval"])
     repetitions = int(parameters["probe_repetitions"])
     checkpoints = checkpoint_cycles(cycles, interval)
     gate_count_in_probe = repetitions + 4
-    gate_duration_us = float(noise_config["probe"]["gate_duration_us"])
-    latency = noise_config["latency"]
-    shot_duration_us = (
-        float(latency["reset_duration_us"])
-        + gate_count_in_probe * gate_duration_us
-        + float(latency["readout_duration_us"])
-    )
     ideal_state = ideal_target_state(cycles)
     run_rows: list[dict[str, Any]] = []
     manifest_rows: list[dict[str, Any]] = []
+    calibration_rows: list[dict[str, Any]] = []
     scenario_offsets = schedule.get(
         "scenario_seed_offsets",
         SCENARIO_SEED_OFFSETS,
@@ -704,6 +863,32 @@ def run_experiment(config: dict[str, Any]) -> dict[str, Any]:
     for condition in config["conditions"]:
         condition_id = str(condition["id"])
         scenario = str(condition["scenario"])
+        condition_noise = resolve_condition_noise(noise_config, condition)
+        probe_noise = build_noise_model(condition_noise, "probe")
+        probe_simulator = AerSimulator(
+            method="density_matrix",
+            noise_model=probe_noise,
+            max_parallel_threads=1,
+        )
+        calibration = calibrate_probe_response(
+            probe_simulator,
+            condition_noise,
+            parameters,
+            config["probe_response_calibration"],
+        )
+        calibration_rows.extend(
+            {
+                "condition_id": condition_id,
+                "probe_T1_us": condition_noise["probe"]["t1_us"],
+                "probe_T2_us": condition_noise["probe"]["t2_us"],
+                "probe_error_deg": float(error),
+                "expected_observed_p0": float(probability),
+            }
+            for error, probability in zip(
+                calibration.error_grid_deg,
+                calibration.observed_p0_grid,
+            )
+        )
         shots = int(condition.get("shots", parameters["shots"]))
         mismatch_scale = float(condition.get("probe_mismatch_scale", 0.0))
         condition_checkpoints = checkpoints
@@ -711,13 +896,20 @@ def run_experiment(config: dict[str, Any]) -> dict[str, Any]:
         target_wait_count = sum(
             0 <= cycle < cycles - 1 for cycle in condition_checkpoints
         )
+        gate_duration_us = float(condition_noise["probe"]["gate_duration_us"])
+        latency = condition_noise["latency"]
+        shot_duration_us = (
+            float(latency["reset_duration_us"])
+            + gate_count_in_probe * gate_duration_us
+            + float(latency["readout_duration_us"])
+        )
         per_checkpoint_probe_time = shots * shot_duration_us
         target_idle_us = per_checkpoint_probe_time + float(
             latency["classical_controller_latency_us"]
         )
         target_idle_total_us = target_wait_count * target_idle_us
         target_noise = build_noise_model(
-            noise_config,
+            condition_noise,
             "target",
             target_idle_us=target_idle_us,
         )
@@ -865,10 +1057,13 @@ def run_experiment(config: dict[str, Any]) -> dict[str, Any]:
                                 if method == "no_compensation"
                                 else target_idle_total_us
                             ),
-                            "target_T1_us": noise_config["target"]["t1_us"],
-                            "target_T2_us": noise_config["target"]["t2_us"],
-                            "probe_T1_us": noise_config["probe"]["t1_us"],
-                            "probe_T2_us": noise_config["probe"]["t2_us"],
+                            "target_T1_us": condition_noise["target"]["t1_us"],
+                            "target_T2_us": condition_noise["target"]["t2_us"],
+                            "probe_T1_us": condition_noise["probe"]["t1_us"],
+                            "probe_T2_us": condition_noise["probe"]["t2_us"],
+                            "classical_controller_latency_us": latency[
+                                "classical_controller_latency_us"
+                            ],
                             "qiskit_version": qiskit.__version__,
                             "qiskit_aer_version": qiskit_aer.__version__,
                             "numpy_version": np.__version__,
@@ -900,12 +1095,29 @@ def run_experiment(config: dict[str, Any]) -> dict[str, Any]:
             "paired trials."
         )
 
+    write_csv(output_dir / "pqec_aer_probe_calibration.csv", calibration_rows)
     paired_rows = paired_statistics(
         run_rows,
         config["conditions"],
         schedule,
         parameters,
     )
+    sensitivity_rows: list[dict[str, Any]] = []
+    sensitivity_config = config.get("sensitivity_analysis")
+    if sensitivity_config is not None:
+        sensitivity_rows = paired_sensitivity_statistics(
+            run_rows,
+            config["conditions"],
+            schedule,
+            parameters,
+            sensitivity_config,
+        )
+        # Keep the complete hypothesis family for this sweep under one Holm correction.
+        holm_adjust(paired_rows + sensitivity_rows, "paired_sign_flip_p")
+        write_csv(
+            output_dir / "pqec_aer_sensitivity_paired_stats.csv",
+            sensitivity_rows,
+        )
     summary_rows = summarize(run_rows, config["conditions"])
     write_csv(output_dir / "pqec_aer_runs.csv", run_rows)
     write_csv(output_dir / "pqec_aer_summary.csv", summary_rows)
@@ -931,6 +1143,7 @@ def run_experiment(config: dict[str, Any]) -> dict[str, Any]:
     return {
         "summary": summary_rows,
         "paired": paired_rows,
+        "sensitivity_paired": sensitivity_rows,
         "run_count": len(run_rows),
         "elapsed_seconds": environment["elapsed_wall_seconds"],
     }

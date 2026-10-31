@@ -12,6 +12,8 @@ from statistics import mean, pstdev
 from time import perf_counter
 from typing import Iterable
 
+from pqec_controller import PredictiveCompensator
+
 try:
     from qiskit import QuantumCircuit
     from qiskit.quantum_info import Pauli, Statevector
@@ -40,6 +42,7 @@ METHODS = (
     "static_calibration",
     "reactive_last_probe",
     "predictive_linear",
+    "predictive_guarded",
     "randomized_compiling",
     "oracle_upper_bound",
 )
@@ -48,6 +51,7 @@ METHOD_LABELS = {
     "static_calibration": "Static calibration",
     "reactive_last_probe": "Reactive (last probe)",
     "predictive_linear": "Predictive (linear)",
+    "predictive_guarded": "Predictive (trend guarded)",
     "randomized_compiling": "Randomized compiling",
     "oracle_upper_bound": "Oracle (upper bound)",
     "ideal_reference": "Ideal reference",
@@ -266,10 +270,11 @@ def make_probe_record(
     probe_errors: list[float],
     shots: int,
     repetitions: int,
+    probe_interval: int,
     seed: int,
     readout_error: float,
     readout_calibration: float,
-) -> tuple[float, list[float]]:
+) -> tuple[float, list[tuple[int, float]]]:
     """Measure only an auxiliary calibration qubit, never the logical qubit."""
     rng = random.Random(seed)
     startup_reading = measure_probe_error(
@@ -280,58 +285,50 @@ def make_probe_record(
         readout_error,
         readout_calibration,
     )
-    post_gate_readings = [
-        measure_probe_error(
-            error, shots, repetitions, rng, readout_error, readout_calibration
+    post_gate_readings: list[tuple[int, float]] = []
+    for cycle in range(probe_interval - 1, len(probe_errors), probe_interval):
+        reading = measure_probe_error(
+            probe_errors[cycle],
+            shots,
+            repetitions,
+            rng,
+            readout_error,
+            readout_calibration,
         )
-        for error in probe_errors
-    ]
+        post_gate_readings.append((cycle, reading))
     return startup_reading, post_gate_readings
-
-
-def linear_forecast(
-    observations: list[tuple[int, float]], target_cycle: int, window: int
-) -> float:
-    """Rolling least-squares forecast from observations strictly before target_cycle."""
-    points = observations[-window:]
-    if not points:
-        raise ValueError("A forecast needs at least one prior probe reading")
-    if len(points) == 1:
-        return points[0][1]
-
-    x_mean = mean(cycle for cycle, _ in points)
-    y_mean = mean(value for _, value in points)
-    denominator = sum((cycle - x_mean) ** 2 for cycle, _ in points)
-    if denominator == 0.0:
-        return y_mean
-    slope = sum((cycle - x_mean) * (value - y_mean) for cycle, value in points)
-    slope /= denominator
-    return y_mean + slope * (target_cycle - x_mean)
 
 
 def correction_for(
     method: str,
     cycle: int,
     startup_reading: float,
-    post_gate_readings: list[float],
+    post_gate_readings: list[tuple[int, float]],
     predictor_window: int,
+    predictor: PredictiveCompensator | None = None,
 ) -> tuple[float, float | None]:
     """Return the applied correction and, for PQEC, the forecast value."""
     if method == "no_compensation" or method == "randomized_compiling":
         return 0.0, None
-    if cycle == 0:
-        available = [(-1, startup_reading)]
-    else:
-        available = [(-1, startup_reading)] + [
-            (index, value) for index, value in enumerate(post_gate_readings[:cycle])
-        ]
+    available = [(-1, startup_reading)] + [
+        (time, value) for time, value in post_gate_readings if time < cycle
+    ]
 
     if method == "static_calibration":
         return startup_reading, None
     if method == "reactive_last_probe":
         return available[-1][1], None
-    if method == "predictive_linear":
-        prediction = linear_forecast(available, cycle, predictor_window)
+    if method in ("predictive_linear", "predictive_guarded"):
+        if predictor is None:
+            predictor = PredictiveCompensator(
+                predictor_window,
+                trend_threshold=2.0 if method == "predictive_guarded" else 0.0,
+                min_trend_observations=4,
+                anchor_to_latest=method == "predictive_guarded",
+            )
+            for time, value in available:
+                predictor.observe(time, value)
+        prediction = predictor.predict_error(cycle)
         return prediction, prediction
     raise ValueError(f"Unknown method: {method}")
 
@@ -418,6 +415,7 @@ def evaluate_trial(
         probe_errors,
         config.shots,
         config.probe_repetitions,
+        config.probe_interval,
         seed + 700_001,
         actual_readout_error,
         readout_calibration,
@@ -442,8 +440,32 @@ def evaluate_trial(
         for repeat in range(repeat_count):
             residuals: list[float] = []
             rc_rng = random.Random(seed + 900_001 + repeat * 97)
+            if method == "predictive_linear":
+                predictor = PredictiveCompensator(config.predictor_window)
+            elif method == "predictive_guarded":
+                predictor = PredictiveCompensator(
+                    config.predictor_window,
+                    trend_threshold=config.trend_threshold,
+                    min_trend_observations=config.min_trend_observations,
+                    anchor_to_latest=True,
+                )
+            else:
+                predictor = None
+            next_probe_reading = 0
+            if predictor is not None:
+                predictor.observe(-1, startup_reading)
             controller_started = perf_counter()
             for cycle, actual_error in enumerate(gate_errors):
+                if predictor is not None:
+                    while (
+                        next_probe_reading < len(post_gate_readings)
+                        and post_gate_readings[next_probe_reading][0] < cycle
+                    ):
+                        probe_cycle, probe_value = post_gate_readings[
+                            next_probe_reading
+                        ]
+                        predictor.observe(probe_cycle, probe_value)
+                        next_probe_reading += 1
                 if method == "oracle_upper_bound":
                     correction = actual_error
                     predicted_value = None
@@ -454,6 +476,7 @@ def evaluate_trial(
                         startup_reading,
                         post_gate_readings,
                         config.predictor_window,
+                        predictor,
                     )
                 if predicted_value is not None:
                     # The hidden error is used here only to score the forecast.
@@ -482,7 +505,10 @@ def evaluate_trial(
         result["cycles"] = config.cycles
         result["shots_per_probe"] = config.shots
         result["probe_repetitions"] = config.probe_repetitions
+        result["probe_interval"] = config.probe_interval
         result["predictor_window"] = config.predictor_window
+        result["trend_threshold"] = config.trend_threshold
+        result["min_trend_observations"] = config.min_trend_observations
         result["base_error_deg"] = config.base_error_deg
         result["drift_rate_deg"] = config.drift_rate_deg
         result["drift_jitter_deg"] = config.drift_jitter_deg
@@ -497,9 +523,30 @@ def evaluate_trial(
         result["prediction_mae_deg"] = (
             math.degrees(mean(prediction_errors)) if prediction_errors else ""
         )
-        result["probe_shots_per_run"] = (config.cycles + 1) * config.shots
-        result["probe_pulses_per_run"] = (
-            (config.cycles + 1) * config.shots * config.probe_repetitions
+        probe_checkpoints_available = 1 + len(post_gate_readings)
+        if method == "static_calibration":
+            probe_checkpoints_used = 1
+        elif method in (
+            "reactive_last_probe",
+            "predictive_linear",
+            "predictive_guarded",
+        ):
+            probe_checkpoints_used = probe_checkpoints_available
+        else:
+            probe_checkpoints_used = 0
+        result["probe_checkpoints_available_per_run"] = (
+            probe_checkpoints_available
+        )
+        result["probe_shots_available_per_run"] = (
+            probe_checkpoints_available * config.shots
+        )
+        result["probe_pulses_available_per_run"] = (
+            probe_checkpoints_available * config.shots * config.probe_repetitions
+        )
+        result["probe_checkpoints_used_per_run"] = probe_checkpoints_used
+        result["probe_shots_used_per_run"] = probe_checkpoints_used * config.shots
+        result["probe_pulses_used_per_run"] = (
+            probe_checkpoints_used * config.shots * config.probe_repetitions
         )
         result["rc_compilations"] = (
             config.rc_compilations if method == "randomized_compiling" else 0
@@ -523,7 +570,10 @@ def evaluate_trial(
             "cycles": config.cycles,
             "shots_per_probe": config.shots,
             "probe_repetitions": config.probe_repetitions,
+            "probe_interval": config.probe_interval,
             "predictor_window": config.predictor_window,
+            "trend_threshold": config.trend_threshold,
+            "min_trend_observations": config.min_trend_observations,
             "base_error_deg": config.base_error_deg,
             "drift_rate_deg": config.drift_rate_deg,
             "drift_jitter_deg": config.drift_jitter_deg,
@@ -534,8 +584,12 @@ def evaluate_trial(
             "probe_readout_error": "",
             "readout_calibration_error": config.probe_readout_calibration_error,
             "prediction_mae_deg": "",
-            "probe_shots_per_run": 0,
-            "probe_pulses_per_run": 0,
+            "probe_checkpoints_available_per_run": 0,
+            "probe_shots_available_per_run": 0,
+            "probe_pulses_available_per_run": 0,
+            "probe_checkpoints_used_per_run": 0,
+            "probe_shots_used_per_run": 0,
+            "probe_pulses_used_per_run": 0,
             "rc_compilations": 0,
             "controller_time_ms_per_sequence": 0.0,
         }
@@ -572,7 +626,13 @@ def summarize(
                 "cycles": group[0]["cycles"],
                 "shots_per_probe": group[0]["shots_per_probe"],
                 "probe_repetitions": group[0]["probe_repetitions"],
+                "probe_interval": group[0]["probe_interval"],
+                "probe_checkpoints_available_per_run": group[0][
+                    "probe_checkpoints_available_per_run"
+                ],
                 "predictor_window": group[0]["predictor_window"],
+                "trend_threshold": group[0]["trend_threshold"],
+                "min_trend_observations": group[0]["min_trend_observations"],
                 "base_error_deg": group[0]["base_error_deg"],
                 "drift_rate_deg": group[0]["drift_rate_deg"],
                 "drift_jitter_deg": group[0]["drift_jitter_deg"],
@@ -611,8 +671,21 @@ def summarize(
                 "mean_controller_time_ms_per_sequence": mean(
                     float(item["controller_time_ms_per_sequence"]) for item in group
                 ),
-                "probe_shots_per_run": group[0]["probe_shots_per_run"],
-                "probe_pulses_per_run": group[0]["probe_pulses_per_run"],
+                "probe_shots_available_per_run": group[0][
+                    "probe_shots_available_per_run"
+                ],
+                "probe_pulses_available_per_run": group[0][
+                    "probe_pulses_available_per_run"
+                ],
+                "probe_checkpoints_used_per_run": group[0][
+                    "probe_checkpoints_used_per_run"
+                ],
+                "probe_shots_used_per_run": group[0][
+                    "probe_shots_used_per_run"
+                ],
+                "probe_pulses_used_per_run": group[0][
+                    "probe_pulses_used_per_run"
+                ],
                 "rc_compilations": group[0]["rc_compilations"],
             }
             summary_rows.append(row)
@@ -678,77 +751,90 @@ def holm_adjust(rows: list[dict[str, object]], p_field: str) -> None:
 def paired_statistics(
     run_rows: list[dict[str, object]], config: argparse.Namespace
 ) -> list[dict[str, object]]:
-    """Paired bootstrap intervals and sign-flip tests for PQEC vs last-probe control."""
+    """Paired inference for each predictive controller versus the last probe."""
     metrics = (
         "final_state_fidelity",
         "rms_gate_error_deg",
         "rms_cumulative_error_deg",
     )
+    predictive_methods = ("predictive_linear", "predictive_guarded")
     pair_rows: dict[tuple[str, int, int], dict[str, dict[str, object]]] = {}
     for row in run_rows:
-        if row["method"] in ("predictive_linear", "reactive_last_probe"):
+        if row["method"] in (*predictive_methods, "reactive_last_probe"):
             key = (str(row["scenario"]), int(row["seed_block"]), int(row["trial"]))
             pair_rows.setdefault(key, {})[str(row["method"])] = row
 
     output: list[dict[str, object]] = []
     for scenario_index, scenario in enumerate(SCENARIOS):
         for metric_index, metric in enumerate(metrics):
-            per_block: dict[int, list[float]] = {
-                block: [] for block in range(config.seed_blocks)
-            }
-            differences: list[float] = []
-            for (row_scenario, block, _trial), pair in sorted(pair_rows.items()):
-                if row_scenario != scenario:
-                    continue
-                if not {
-                    "predictive_linear",
-                    "reactive_last_probe",
-                }.issubset(pair):
-                    continue
-                difference = float(pair["predictive_linear"][metric]) - float(
-                    pair["reactive_last_probe"][metric]
-                )
-                differences.append(difference)
-                per_block[block].append(difference)
+            for method_index, predictive_method in enumerate(predictive_methods):
+                per_block: dict[int, list[float]] = {
+                    block: [] for block in range(config.seed_blocks)
+                }
+                differences: list[float] = []
+                for (row_scenario, block, _trial), pair in sorted(pair_rows.items()):
+                    if row_scenario != scenario:
+                        continue
+                    if not {
+                        predictive_method,
+                        "reactive_last_probe",
+                    }.issubset(pair):
+                        continue
+                    difference = float(pair[predictive_method][metric]) - float(
+                        pair["reactive_last_probe"][metric]
+                    )
+                    differences.append(difference)
+                    per_block[block].append(difference)
 
-            if len(differences) < 2:
-                raise ValueError(f"Not enough paired runs for {scenario}/{metric}")
-            stat_seed = (
-                config.seed
-                + scenario_index * 10_007
-                + metric_index * 97_409
-            )
-            ci_low, ci_high = paired_bootstrap_ci(
-                differences, stat_seed, config.bootstrap_repetitions
-            )
-            p_value = paired_sign_flip_pvalue(
-                differences,
-                stat_seed + 1_000_003,
-                config.permutation_repetitions,
-            )
-            row: dict[str, object] = {
-                "scenario": scenario,
-                "metric": metric,
-                "comparison": "predictive_linear - reactive_last_probe",
-                "base_seed": config.seed,
-                "seed_blocks": config.seed_blocks,
-                "trials_per_seed_block": config.trials,
-                "n_pairs": len(differences),
-                "mean_difference": mean(differences),
-                "bootstrap_95ci_low": ci_low,
-                "bootstrap_95ci_high": ci_high,
-                "paired_sign_flip_p": p_value,
-                "holm_adjusted_p": "",
-                "bootstrap_repetitions": config.bootstrap_repetitions,
-                "permutation_repetitions": config.permutation_repetitions,
-            }
-            for block in range(config.seed_blocks):
-                block_differences = per_block[block]
-                row[f"seed_block_{block}_n"] = len(block_differences)
-                row[f"seed_block_{block}_mean_difference"] = (
-                    mean(block_differences) if block_differences else ""
+                if len(differences) < 2:
+                    raise ValueError(
+                        f"Not enough paired runs for "
+                        f"{scenario}/{predictive_method}/{metric}"
+                    )
+                stat_seed = (
+                    config.seed
+                    + scenario_index * 10_007
+                    + metric_index * 97_409
+                    + method_index * 1_000_003
                 )
-            output.append(row)
+                ci_low, ci_high = paired_bootstrap_ci(
+                    differences, stat_seed, config.bootstrap_repetitions
+                )
+                p_value = paired_sign_flip_pvalue(
+                    differences,
+                    stat_seed + 2_000_003,
+                    config.permutation_repetitions,
+                )
+                row: dict[str, object] = {
+                    "scenario": scenario,
+                    "metric": metric,
+                    "comparison": (
+                        f"{predictive_method} - reactive_last_probe"
+                    ),
+                    "base_seed": config.seed,
+                    "seed_blocks": config.seed_blocks,
+                    "trials_per_seed_block": config.trials,
+                    "shots_per_probe": config.shots,
+                    "probe_repetitions": config.probe_repetitions,
+                    "probe_interval": config.probe_interval,
+                    "trend_threshold": config.trend_threshold,
+                    "min_trend_observations": config.min_trend_observations,
+                    "n_pairs": len(differences),
+                    "mean_difference": mean(differences),
+                    "bootstrap_95ci_low": ci_low,
+                    "bootstrap_95ci_high": ci_high,
+                    "paired_sign_flip_p": p_value,
+                    "holm_adjusted_p": "",
+                    "bootstrap_repetitions": config.bootstrap_repetitions,
+                    "permutation_repetitions": config.permutation_repetitions,
+                }
+                for block in range(config.seed_blocks):
+                    block_differences = per_block[block]
+                    row[f"seed_block_{block}_n"] = len(block_differences)
+                    row[f"seed_block_{block}_mean_difference"] = (
+                        mean(block_differences) if block_differences else ""
+                    )
+                output.append(row)
 
     holm_adjust(output, "paired_sign_flip_p")
     return output
@@ -773,12 +859,13 @@ def print_summary(rows: list[dict[str, object]]) -> None:
 
 def print_paired_statistics(rows: list[dict[str, object]]) -> None:
     print(
-        "\nPaired inference: predictive minus last probe; "
-        "bootstrap 95% CI, two-sided sign-flip permutation, Holm correction."
+        "\nPaired inference versus last probe: bootstrap 95% CI, "
+        "two-sided sign-flip permutation, Holm correction across 18 comparisons."
     )
     for row in rows:
         print(
             f"{SCENARIO_LABELS[str(row['scenario'])]:24s}"
+            f"{str(row['comparison']):42s} "
             f"{str(row['metric']):28s}"
             f"n={int(row['n_pairs']):3d} "
             f"mean={float(row['mean_difference']): .7g} "
@@ -796,7 +883,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed-blocks", type=int, default=2)
     parser.add_argument("--shots", type=int, default=4096)
     parser.add_argument("--probe-repetitions", type=int, default=13)
+    parser.add_argument("--probe-interval", type=int, default=1)
     parser.add_argument("--predictor-window", type=int, default=16)
+    parser.add_argument("--trend-threshold", type=float, default=2.0)
+    parser.add_argument("--min-trend-observations", type=int, default=4)
     parser.add_argument("--rc-compilations", type=int, default=1)
     parser.add_argument("--bootstrap-repetitions", type=int, default=5000)
     parser.add_argument("--permutation-repetitions", type=int, default=10000)
@@ -833,7 +923,9 @@ def parse_args() -> argparse.Namespace:
         args.seed_blocks,
         args.shots,
         args.probe_repetitions,
+        args.probe_interval,
         args.predictor_window,
+        args.min_trend_observations,
         args.rc_compilations,
         args.bootstrap_repetitions,
         args.permutation_repetitions,
@@ -841,6 +933,12 @@ def parse_args() -> argparse.Namespace:
         parser.error("All counts and window sizes must be positive.")
     if args.probe_repetitions % 4 != 1:
         parser.error("--probe-repetitions must be 4k + 1 for signed Y-basis sensing.")
+    if args.min_trend_observations < 3:
+        parser.error("--min-trend-observations must be at least 3.")
+    if args.min_trend_observations > args.predictor_window:
+        parser.error("--min-trend-observations cannot exceed --predictor-window.")
+    if not math.isfinite(args.trend_threshold) or args.trend_threshold < 0.0:
+        parser.error("--trend-threshold must be finite and non-negative.")
     if args.drift_jitter_deg < 0.0 or args.white_noise_sigma_deg < 0.0:
         parser.error("Noise standard deviations cannot be negative.")
     if args.probe_local_noise_sigma_deg < 0.0:
@@ -888,11 +986,15 @@ def main() -> None:
         f"Paired runs per scenario: {config.trials * config.seed_blocks} "
         f"({config.trials} per seed block; {config.seed_blocks} blocks)."
     )
+    probe_checkpoints = 1 + len(
+        range(config.probe_interval - 1, config.cycles, config.probe_interval)
+    )
     print(
-        "Matched auxiliary-probe budget per controller and trial: "
-        f"{(config.cycles + 1) * config.shots:,} shots; "
-        f"{(config.cycles + 1) * config.shots * config.probe_repetitions:,} "
-        "probe rotations."
+        "Shared auxiliary-probe record for reactive/predictive controllers: "
+        f"{probe_checkpoints * config.shots:,} shots; "
+        f"{probe_checkpoints * config.shots * config.probe_repetitions:,} "
+        f"probe rotations (one probe measurement every {config.probe_interval} "
+        "logical pulses)."
     )
     print_summary(summary_rows)
     print_paired_statistics(paired_rows)

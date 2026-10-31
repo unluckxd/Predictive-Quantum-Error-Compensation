@@ -1,124 +1,106 @@
 # Predictive Quantum Error Compensation (PQEC)
 
-## Статус
+**Status: simulation-validated prototype; not hardware-validated quantum error correction.**
 
-PQEC v0.2 — воспроизводимый тестовый контроллер компенсации когерентной ошибки угла импульса. Эта версия проверяет прогноз ошибки по вспомогательному кубиту и заранее меняет угол следующего управляющего импульса. Это симуляционный прототип управления одним незакодированным кубитом; испытания на квантовом устройстве и отказоустойчивая коррекция логического кубита ещё не реализованы. В этой работе внешние исследования не использовались.
+PQEC v0.2 tests predictive compensation of coherent single-qubit pulse-angle drift. A separately prepared calibration qubit supplies probe measurements; a classical controller uses their history to adjust the angle of the next logical pulse. The controller does not measure the logical state. All results in this repository come from the project’s own simulator; no external studies or datasets were used.
 
-Выбран вариант А — прогноз перед следующим импульсом, с косвенными наблюдениями B от отдельного пробника. Запутанная пара кубитов пока не входит в эксперимент.
+The current scope is deliberately narrow: repeated single-qubit Rx gates, a shared-drift hypothesis, finite-shot probe readout, and a separate probe-mismatch stress case. There is no encoded logical qubit, entangled probe pair, or hardware experiment.
 
-## Алгоритм
+## Main findings
 
-Пробник готовится в состоянии |+y⟩ и получает повторения Rx(90° + δ). Измерение по Y реализуется поворотами S† и H перед считыванием по Z. При m = 4k + 1 вероятность результата 0 равна
+At the full budget (4096 probe shots per checkpoint, every logical cycle), the guarded predictor was compared with the reactive last-probe controller using 200 paired runs per condition. Positive fidelity differences and negative cumulative-error differences favor PQEC.
 
-P(0) = (1 − sin(mδ))/2,   δ̂ = −arcsin(2n₀/N − 1)/m.
-
-В формуле n₀/N — доля нулевых исходов после поправки на заданную ошибку считывания. При каждом запуске вычисленная вероятность сверяется с прямым ожиданием оператора Y и аналитической формулой; в текущем запуске максимальное расхождение составило 6,7 × 10⁻¹⁶.
-
-Оценка строится только по результатам пробника. Логическое состояние не измеряется и не передаётся контроллеру. Перед очередным целевым поворотом Rx(90°) контроллер выдаёт угол 90° − прогноз ошибки.
-
-В pqec_controller.py реализован пошаговый класс PredictiveCompensator. Углы API задаются в радианах; оценку ошибки передают через observe(cycle, measured_error_rad), а команду получают через command_angle(target_angle_rad, target_cycle).
-
-Сравниваются два предиктора:
-
-- Predictive (linear) — обычная линейная экстраполяция последних измерений. Сохранён как прозрачный исследовательский baseline.
-- Predictive (trend guarded) — оценивает наклон по последним 16 пробам, сравнивает его с оценкой разброса остатков и подавляет слабый наклон. При стандартном пороге 2 и менее чем четырёх наблюдениях наклон не применяется; прогноз закрепляется за последним измерением. При более сильном тренде наклон плавно уменьшается, а прогноз отсчитывается от последней пробы.
-
-Порог — эвристический фильтр по остаткам этой модели, а не универсальная оценка уверенности для аппаратуры. Контроллер не может определить по одному пробнику, что его поведение перестало соответствовать логическому кубиту.
-
-Для проверки используются последовательности из 64 целевых Rx(90°). Моделируются три условия:
-
-| Условие | Ошибка логического кубита и пробника |
-| --- | --- |
-| Общий медленный дрейф | Общее начальное смещение 2°, дрейф 0,01° за цикл, джиттер 0,005° |
-| Независимый белый шум | Среднее смещение 2°, независимый шум с σ = 0,20° |
-| Рассогласование пробника | Логический дрейфует на 0,01° за цикл; пробник — на 0,03°, смещение пробника 0,20°, локальный шум σ = 0,05° |
-
-Дополнительно сравниваются отсутствие компенсации, стартовая калибровка, поправка по последней доступной пробе и упрощённый randomized-compiling baseline. Последний только случайно меняет знак когерентной ошибки в этой модели; это не полная реализация randomized compiling. Oracle использует скрытую ошибку и служит недостижимой верхней границей.
-
-## Экспериментальный протокол
-
-В каждом условии выполняются 200 парных прогонов: два seed-блока по 100. Внутри каждого прогона все методы используют одну и ту же траекторию логической ошибки и одну запись измерений пробника. В CSV сохранены строки каждого метода, прогона, seed-блока и seed.
-
-Основное сравнение — каждый предиктор против последней доступной пробы. Используются парный percentile-bootstrap 95% интервал и двусторонний sign-flip permutation test с 10 000 перестановок; тест предполагает обменяемость знаков парных разниц при нулевой гипотезе. Поправка Холма применяется к 18 сравнениям на один бюджет: два предиктора × три метрики × три условия. При объединении пяти бюджетов pqec_budget_sweep.py также считает глобальную поправку Холма для всех 90 сравнений. Интервалы остаются обычными нескорректированными 95% интервалами.
-
-State fidelity и gate fidelity считаются точно аналитической моделью одного кубита или через Qiskit Statevector. Конечное число shots используется для пробника, но не для считывания логического результата. Поэтому это проверка модели оценивания и управления, а не полная модель аппаратного эксперимента.
-
-Число пробных измерений равно 1 + floor(cycles / probe_interval), включая стартовую пробу. Бюджет равен этому числу, умноженному на shots. При m = 13 поворотах на одну пробную схему число пробных поворотов дополнительно умножается на 13. Затраты на калибровку считывания и томографию результата не включены.
-
-Поправка встраивается в угол следующего логического импульса и не добавляет отдельный логический вентиль. В CSV также записывается время классического расчёта на последовательность; это время зависит от компьютера, а задержка обратной связи на реальном устройстве не моделируется.
-
-В текущем полном прогоне среднее время Python-контроллера на 64 импульса составило 0,122 мс для последней пробы и 1,534 мс для guarded predictor. Это только измерение на компьютере разработки, без формирования пробных схем и передачи команд устройству.
-
-Парные методы получают общую запись измерений. В ресурсных полях CSV отдельно указаны доступный бюджет и измерения, использованные методом: стартовая калибровка использует одну пробу, реактивный и предиктивные контроллеры — всю запись, а методы без датчика, oracle и ideal reference — ноль пробных измерений. В таблицах бюджетов указана стоимость, доступная активным контроллерам; у сравниваемых реактивного и предиктивного методов она совпадает.
-
-## Результаты полной версии
-
-Полный запуск v0.2: 4096 shots на пробу, измерение каждый цикл, 200 пар на условие. Использована аналитическая модель одного кубита без Qiskit; это тот же расчёт амплитуд, а в CSV записан фактически выбранный backend. Разности приведены как guarded predictor минус последняя проба. Положительная разница fidelity лучше; отрицательная разница RMS накопленной ошибки лучше.
-
-| Условие | Разница финальной fidelity (95% CI) | Глобальный Holm p | Разница RMS накопленной ошибки (95% CI) | Глобальный Holm p |
+| Scenario | Final fidelity difference (95% paired CI) | Global Holm p | RMS cumulative-error difference (95% paired CI) | Global Holm p |
 | --- | ---: | ---: | ---: | ---: |
-| Общий медленный дрейф | +0,00001858 [ +0,00001520; +0,00002186 ] | 0,0090 | −0,07430° [ −0,08782°; −0,06018° ] | 0,0090 |
-| Независимый белый шум | +0,00000138 [ −0,00000176; +0,00000483 ] | 1,0000 | −0,00238° [ −0,00850°; +0,00352° ] | 1,0000 |
-| Рассогласование пробника | −0,009292 [ −0,009397; −0,009190 ] | 0,0090 | +0,79661° [ +0,78489°; +0,80803° ] | 0,0090 |
+| Shared slow drift | +1.858e-5 [1.520e-5, 2.186e-5] | 0.0090 | −0.0743 deg [−0.0878, −0.0602] | 0.0090 |
+| Independent white noise | +1.384e-6 [−1.755e-6, 4.831e-6] | 1.0000 | −0.0024 deg [−0.0085, +0.0035] | 1.0000 |
+| Probe mismatch | −0.009292 [−0.009397, −0.009190] | 0.0090 | +0.7966 deg [+0.7849, +0.8080] | 0.0090 |
 
-Для общего дрейфа накопленная ошибка и финальная fidelity улучшаются на полной выборке; направление обеих разниц совпало в двух seed-блоках. При этом RMS ошибки отдельного импульса у guarded predictor выросла на 0,00148°: метрики не дают универсального выигрыша. На независимом белом шуме улучшения финальной fidelity и накопленной ошибки нет. При рассогласовании пробника компенсация достоверно хуже реактивного baseline — это явно воспроизводимый режим отказа.
+The multiple-testing correction in this table covers 90 hypotheses across the five tested budgets. The bootstrap intervals are ordinary, unadjusted 95% intervals. Full parameter definitions and metric formulas are in [the mathematical model](docs/mathematical_model.md).
 
-## Проверка меньшего бюджета
+Gate-level results show a small but consistent trade-off: guarded PQEC has slightly lower mean gate fidelity and higher RMS gate-angle error than the reactive controller in all three scenarios.
 
-Для пяти настроек выполнено по 200 пар на каждое условие. Все сравнения ниже — guarded predictor против последней доступной пробы в условии общего медленного дрейфа. Глобальный Holm p скорректирован сразу по 90 гипотезам: 5 бюджетов × 18 сравнений.
+| Scenario | Mean gate fidelity (reactive → guarded) | RMS gate-error difference (95% paired CI) | Global Holm p | Guarded prediction MAE |
+| --- | ---: | ---: | ---: | ---: |
+| Shared slow drift | 0.999999736 → 0.999999725 | +0.001476° [+0.001338°, +0.001614°] | 0.0090 | 0.0586° |
+| Independent white noise | 0.999995662 → 0.999995641 | +0.000706° [+0.000571°, +0.000846°] | 0.0090 | 0.2338° |
+| Probe mismatch | 0.999966865 → 0.999964981 | +0.022642° [+0.022500°, +0.022787°] | 0.0090 | 0.7456° |
 
-| Shots и интервал проб | Shots за прогон | Меньше полного бюджета | Δ финальной fidelity (95% CI) | Глобальный p | Δ RMS накопленной ошибки (95% CI) | Глобальный p |
+Prediction MAE compares each forecast with the simulator's hidden upcoming logical error; it is a simulation-only diagnostic. It is not a measurement available to the controller or a hardware-reported calibration score.
+
+Under shared slow drift, both the final-fidelity gain and cumulative-error reduction had the same direction in each of the two seed blocks; the small per-gate error increase also repeated in both blocks.
+
+## PQEC versus the reactive controller
+
+![Paired guarded-PQEC effects versus the reactive controller across all three scenarios](figures/pqec_vs_reactive_full_budget.svg)
+
+## Explicit failure case: probe mismatch
+
+The probe is modeled with a 0.20 deg offset and 0.03 deg/cycle drift; the logical qubit has 0.01 deg/cycle drift. In this case guarded PQEC is significantly worse than the reactive controller. This failure is part of the result and is not hidden in an aggregate score.
+
+![Probe-mismatch stress test showing lower fidelity and higher accumulated error under PQEC](figures/probe_mismatch_failure.svg)
+
+## Measurement-budget results
+
+Among reduced-budget settings, only the 512-shots-every-4-cycles setting retained a statistically supported gain under shared slow drift after the global correction across all five budgets.
+
+| Shots/checkpoint, interval | Probe shots per sequence | Reduction from full budget | Final fidelity difference (95% CI) | Global p | Cumulative-error difference (95% CI) | Global p |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 4096, каждый цикл | 266 240 | 1× | +0,00001858 [ +0,00001520; +0,00002186 ] | 0,0090 | −0,07430° [ −0,08782°; −0,06018° ] | 0,0090 |
-| 512, каждый 4-й цикл | 8 704 | 30,6× | +0,00008971 [ +0,00004926; +0,00013633 ] | 0,0090 | −0,04915° [ −0,07941°; −0,01857° ] | 0,0357 |
-| 128, каждый цикл | 8 320 | 32,0× | −0,00000007 [ −0,00001056; +0,00001037 ] | 1,0000 | −0,00009° [ −0,01510°; +0,01520° ] | 1,0000 |
-| 128, каждый 4-й цикл | 2 176 | 122,4× | +0,00011363 [ +0,00003409; +0,00019528 ] | 0,1220 | −0,03672° [ −0,07588°; −0,00139° ] | 0,9881 |
-| 64, каждый 8-й цикл | 576 | 462,2× | +0,00004773 [ −0,00031497; +0,00041805 ] | 1,0000 | +0,00618° [ −0,05734°; +0,07033° ] | 1,0000 |
+| 4096, every cycle | 266240 | 1.0x | +1.858e-5 [1.520e-5, 2.186e-5] | 0.0090 | −0.0743 deg [−0.0878, −0.0602] | 0.0090 |
+| 512, every 4 cycles | 8704 | 30.6x | +8.971e-5 [+4.926e-5, 1.363e-4] | 0.0090 | −0.0491 deg [−0.0794, −0.0186] | 0.0357 |
+| 128, every cycle | 8320 | 32.0x | −6.943e-8 [−1.056e-5, 1.037e-5] | 1.0000 | −0.0001 deg [−0.0151, +0.0152] | 1.0000 |
+| 128, every 4 cycles | 2176 | 122.4x | +1.136e-4 [+3.409e-5, 1.953e-4] | 0.1220 | −0.0367 deg [−0.0759, −0.0014] | 0.9881 |
+| 64, every 8 cycles | 576 | 462.2x | +4.773e-5 [−3.150e-4, 4.181e-4] | 1.0000 | +0.0062 deg [−0.0573, +0.0703] | 1.0000 |
 
-Наиболее устойчивый малый бюджет в этой модели — 512 shots раз в четыре цикла: преимущество сохраняется после глобальной поправки и по финальной fidelity, и по накопленной ошибке. 128 shots раз в четыре цикла дают предварительный положительный сигнал, но он не проходит глобальную поправку между бюджетами. При 64 shots раз в восемь циклов преимущество не подтверждается. Настройки 128×1 и 512×4 имеют близкие общие бюджеты; внутри модели более редкие, но точнее измеренные пробы дали лучший результат для прогнозирования медленного дрейфа. Между бюджетами отдельный парный статистический тест не проводился, поэтому это сравнение конфигураций описательное.
+![Paired PQEC-versus-reactive effects across measurement budgets](figures/budget_tradeoff.svg)
 
-## Запуск
+The 128-shots-every-4-cycles result is a preliminary positive signal, but it does not survive the global correction across budgets. Cross-budget comparisons are descriptive; the inferential tests are paired within each budget.
 
-Python 3.10 или новее. Qiskit устанавливается из requirements.txt; без него однокубитная симуляция использует точный аналитический fallback.
+At the full budget, the active probe path uses 266,240 shots and 3,461,120 modeled probe rotations per 64-gate sequence. The simulator's Python controller timing is software overhead on the run host, not a hardware feedback-latency measurement.
+
+## Architecture and model
+
+The experiment uses a separate auxiliary probe qubit prepared in |+y>. It receives m repeated Rx(90 deg + delta) pulses and is measured along Y by applying S-dagger and H before Z-basis readout. For m = 4k + 1:
+
+- P(0) = (1 − sin(m delta)) / 2
+- estimated delta = −arcsin(2 p0 − 1) / m, after the configured readout correction
+
+The predictor returns a corrected command angle before the next logical pulse. The simulator checks the Y-basis probability against a direct Pauli-Y expectation and the analytic expression; the largest observed discrepancy was 6.7e-16.
+
+The guarded predictor is the primary PQEC variant. It estimates a rolling linear slope, suppresses trends that are weak relative to the fit residuals, and anchors the forecast to the latest probe reading. When the trend is not supported, it falls back to the last-probe correction. This threshold is a model heuristic, not a calibrated hardware confidence bound.
+
+See [architecture](docs/architecture.md) and [the mathematical model](docs/mathematical_model.md) for details.
+
+## Reproduce the project
+
+From the repository root, with Python 3.10 or later:
 
 ~~~powershell
 python -m venv .venv
 .venv/Scripts/Activate.ps1
-python -m pip install -r requirements.txt
-python pqec_single_qubit.py
+# The archived v0.2 runs use the built-in analytic state-vector fallback.
+# It requires no third-party packages.
+python pqec_single_qubit.py --config configs/full_run_v02.json
+python pqec_budget_sweep.py --config configs/budget_sweep_v02.json
+python plot_results.py
 python -m unittest discover -s tests -v
 ~~~
 
-Один запуск всей бюджетной сетки и сборка общих таблиц:
+Qiskit is optional for the one-qubit state simulation. To use the Qiskit `Statevector` backend instead, install it with `python -m pip install -r requirements.txt` before running the scripts. The archived v0.2 CSVs were generated with the analytic fallback. The saved v0.1 Qiskit run is retained under results/pqec_v01_qiskit_*.csv; common summary metrics matched the analytic implementation exactly.
 
-~~~powershell
-python pqec_budget_sweep.py
-~~~
+The experiment configurations, seed schedule, CSV inventory, and reproduction details are documented in [reproducibility](docs/reproducibility.md). The main data files are:
 
-Сетка по умолчанию выполняет пять бюджетов по 200 пар на условие. Для быстрого технического прогона можно задать, например, --trials 10 --seed-blocks 1. Чтобы изменить seed или число повторов, используйте параметры этого скрипта.
+- results/pqec_single_qubit_runs.csv — every method and paired trial for the full budget
+- results/pqec_budget_sweep_summary.csv — five budgets, scenario summaries, and resource counts
+- results/pqec_budget_sweep_paired_stats.csv — paired effects, bootstrap intervals, per-budget and global Holm-adjusted p-values
+- results/experiment_seed_manifest.csv — trajectory, probe, and randomized-compiling seeds for each scenario/trial
+- results/statistical_seed_manifest.csv — bootstrap and paired-permutation seeds for every scenario/metric/controller test
+- results/budget_*_runs.csv — individual rows for each budget configuration
 
-Для интеграции в пошаговый контроллер:
+## Limitations
 
-~~~python
-import math
-from pqec_controller import PredictiveCompensator
+This is a single-qubit simulation of Rx angle errors. It excludes decoherence, leakage, crosstalk, spatially varying device noise, feedback latency, and output-state measurement cost. Logical-state fidelity is computed exactly from the simulator state; it is not estimated from hardware readout shots.
 
-controller = PredictiveCompensator(
-    window=16,
-    trend_threshold=2.0,
-    min_trend_observations=4,
-    anchor_to_latest=True,
-)
-controller.observe(-1, measured_error_rad)
-command_rad = controller.command_angle(math.pi / 2, target_cycle=0)
-# После следующего пробного измерения передайте его цикл и оценку угла.
-controller.observe(cycle_index, measured_error_rad)
-~~~
+The probe-mismatch result shows the central transfer assumption: the probe must track the logical qubit’s control error. A single probe cannot diagnose its own mismatch from its measurement history alone. Independent random noise also receives no universal predictive benefit. The randomized-compiling entry is only a simplified sign-flip baseline, not a full circuit-level implementation.
 
-Сводка текущего полного запуска находится в results/pqec_single_qubit_summary.csv; все парные прогоны — в results/pqec_single_qubit_runs.csv; статистика — в results/pqec_single_qubit_paired_stats.csv. Таблицы бюджетной сетки и глобальной коррекции Холма записываются в results/pqec_budget_sweep_summary.csv и results/pqec_budget_sweep_paired_stats.csv. Файлы budget_*_runs.csv сохраняют отдельные прогоны для каждой настройки.
-
-Первичный Qiskit-прогон линейного предиктора из v0.1 сохранён отдельно в results/pqec_v01_qiskit_*.csv. Его статистическая поправка применялась к девяти сравнениям; прямые p-значения v0.1 не следует смешивать с текущей сеткой v0.2.
-
-## Ограничения
-
-Это только симуляция одного кубита и общий источник Rx-ошибки. Модель не включает декогеренцию, утечку, кросс-ток, пространственную карту ошибок, ошибки исполнения классической команды, задержки обратной связи и стоимость томографии. Рассогласование пробника задаётся вручную и не покрывает все типы аппаратной неоднородности. Предсказание не устраняет независимый случайный шум и может ухудшить результат при неверном переносе ошибки с пробника на логический кубит. Для утверждения о работе на настоящем процессоре нужен отдельный аппаратный эксперимент.
+Accordingly, these results support a reproducible simulation prototype for coherent-drift compensation. They do not establish hardware performance or a new fault-tolerant quantum error-correction technology. See [limitations and failure analysis](docs/limitations.md).

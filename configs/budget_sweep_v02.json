@@ -1,0 +1,65 @@
+{
+  "experiment_id": "pqec-budget-sweep-v0.2",
+  "claim_scope": "simulation-validated prototype; no hardware validation",
+  "seed_schedule": {
+    "base_seed": 20261031,
+    "scenario_offsets": {
+      "slow_drift": 0,
+      "white_noise": 100003,
+      "probe_mismatch": 200003
+    },
+    "seed_block_stride": 1000003,
+    "trial_stride": 1009,
+    "probe_trajectory_seed_offset": 5000117,
+    "probe_measurement_seed_offset": 700001,
+    "randomized_compiling_seed_offset": 900001,
+    "randomized_compiling_repeat_stride": 97,
+    "statistical_seed_formula": "base_seed + scenario_index*10007 + metric_index*97409 + predictor_index*1000003",
+    "permutation_seed_offset": 2000003
+  },
+  "parameters": {
+    "trials": 100,
+    "seed_blocks": 2,
+    "seed": 20261031,
+    "cycles": 64,
+    "probe_repetitions": 13,
+    "predictor_window": 16,
+    "trend_threshold": 2.0,
+    "min_trend_observations": 4,
+    "bootstrap_repetitions": 5000,
+    "permutation_repetitions": 10000,
+    "output_dir": "results"
+  },
+  "budgets": [
+    {
+      "id": "128shots_every1",
+      "file_suffix": "128s_interval1",
+      "shots": 128,
+      "interval": 1
+    },
+    {
+      "id": "512shots_every4",
+      "file_suffix": "512s_interval4",
+      "shots": 512,
+      "interval": 4
+    },
+    {
+      "id": "128shots_every4",
+      "file_suffix": "128s_interval4",
+      "shots": 128,
+      "interval": 4
+    },
+    {
+      "id": "64shots_every8",
+      "file_suffix": "64s_interval8",
+      "shots": 64,
+      "interval": 8
+    },
+    {
+      "id": "4096shots_every1",
+      "file_suffix": "4096s_interval1",
+      "shots": 4096,
+      "interval": 1
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="960" viewBox="0 0 1500 960" role="img">
+<title>Guarded PQEC versus reactive control: full measurement budget</title>
+<desc>Paired mean differences and 95 percent bootstrap confidence intervals for final state fidelity, RMS gate-angle error, and RMS cumulative error in three simulation scenarios.</desc>
+<rect width="1500" height="960" fill="#FFFFFF"/>
+<text x="42.00" y="48.00" font-family="Arial, Helvetica, sans-serif" font-size="28px" font-weight="bold" fill="#17212B" text-anchor="start">Guarded PQEC vs reactive last-probe control</text>
+<text x="42.00" y="78.00" font-family="Arial, Helvetica, sans-serif" font-size="16px" font-weight="normal" fill="#5D6B78" text-anchor="start">Full budget: 4096 shots per checkpoint, 64 Rx gates, 200 paired runs per scenario</text>
+<rect x="35.00" y="112.00" width="465.00" height="785.00" rx="12.00" fill="#F6F8FA" stroke="#E3E8ED"/>
+<text x="57.00" y="150.00" font-family="Arial, Helvetica, sans-serif" font-size="20px" font-weight="bold" fill="#17212B" text-anchor="start">Shared slow drift</text>
+<text x="57.00" y="202.00" font-family="Arial, Helvetica, sans-serif" font-size="15px" font-weight="bold" fill="#17212B" text-anchor="start">Final state fidelity difference</text>
+<line x1="73.00" y1="237.00" x2="472.00" y2="237.00" stroke="#D9E0E7" stroke-width="2.00"/>
+<line x1="116.64" y1="204.00" x2="116.64" y2="270.00" stroke="#17212B" stroke-width="1.50" stroke-dasharray="5 4"/>
+<line x1="333.47" y1="237.00" x2="428.36" y2="237.00" stroke="#238B73" stroke-width="4.00"/>
+<line x1="333.47" y1="229.00" x2="333.47" y2="245.00" stroke="#238B73" stroke-width="2.00"/>
+<line x1="428.36" y1="229.00" x2="428.36" y2="245.00" stroke="#238B73" stroke-width="2.00"/>
+<circle cx="381.67" cy="237.00" r="8.00" fill="#238B73" stroke="#FFFFFF" stroke-width="2.00"/>
+<text x="73.00" y="265.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="start">-3.1e-06</text>
+<text x="116.64" y="265.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="bold" fill="#17212B" text-anchor="middle">0</text>
+<text x="472.00" y="265.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">2.5e-05</text>
+<text x="57.00" y="294.00" font-family="Arial, Helvetica, sans-serif" font-size="14px" font-weight="bold" fill="#238B73" text-anchor="start">Delta = +1.86e-05</text>
+<text x="57.00" y="318.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">95% paired CI: [+1.52e-05, +2.19e-05]</text>
+<text x="57.00" y="341.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Global Holm p (90 tests): 0.0090</text>
+<text x="57.00" y="425.00" font-family="Arial, Helvetica, sans-serif" font-size="15px" font-weight="bold" fill="#17212B" text-anchor="start">RMS gate-angle error difference (deg)</text>
+<line x1="73.00" y1="460.00" x2="472.00" y2="460.00" stroke="#D9E0E7" stroke-width="2.00"/>
+<line x1="116.64" y1="427.00" x2="116.64" y2="493.00" stroke="#17212B" stroke-width="1.50" stroke-dasharray="5 4"/>
+<line x1="375.14" y1="460.00" x2="428.36" y2="460.00" stroke="#C43D40" stroke-width="4.00"/>
+<line x1="375.14" y1="452.00" x2="375.14" y2="468.00" stroke="#C43D40" stroke-width="2.00"/>
+<line x1="428.36" y1="452.00" x2="428.36" y2="468.00" stroke="#C43D40" stroke-width="2.00"/>
+<circle cx="401.71" cy="460.00" r="8.00" fill="#C43D40" stroke="#FFFFFF" stroke-width="2.00"/>
+<text x="73.00" y="488.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="start">-0.000</text>
+<text x="116.64" y="488.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="bold" fill="#17212B" text-anchor="middle">0</text>
+<text x="472.00" y="488.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">0.002</text>
+<text x="57.00" y="517.00" font-family="Arial, Helvetica, sans-serif" font-size="14px" font-weight="bold" fill="#C43D40" text-anchor="start">Delta = +0.001 deg</text>
+<text x="57.00" y="541.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">95% paired CI: [+0.001 deg, +0.002 deg]</text>
+<text x="57.00" y="564.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Global Holm p (90 tests): 0.0090</text>
+<text x="57.00" y="648.00" font-family="Arial, Helvetica, sans-serif" font-size="15px" font-weight="bold" fill="#17212B" text-anchor="start">RMS cumulative error difference (deg)</text>
+<line x1="73.00" y1="683.00" x2="472.00" y2="683.00" stroke="#D9E0E7" stroke-width="2.00"/>
+<line x1="428.36" y1="650.00" x2="428.36" y2="716.00" stroke="#17212B" stroke-width="1.50" stroke-dasharray="5 4"/>
+<line x1="116.64" y1="683.00" x2="214.76" y2="683.00" stroke="#238B73" stroke-width="4.00"/>
+<line x1="116.64" y1="675.00" x2="116.64" y2="691.00" stroke="#238B73" stroke-width="2.00"/>
+<line x1="214.76" y1="675.00" x2="214.76" y2="691.00" stroke="#238B73" stroke-width="2.00"/>
+<circle cx="164.63" cy="683.00" r="8.00" fill="#238B73" stroke="#FFFFFF" stroke-width="2.00"/>
+<text x="73.00" y="711.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="start">-0.100</text>
+<text x="428.36" y="711.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="bold" fill="#17212B" text-anchor="middle">0</text>
+<text x="472.00" y="711.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">0.012</text>
+<text x="57.00" y="740.00" font-family="Arial, Helvetica, sans-serif" font-size="14px" font-weight="bold" fill="#238B73" text-anchor="start">Delta = -0.074 deg</text>
+<text x="57.00" y="764.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">95% paired CI: [-0.088 deg, -0.060 deg]</text>
+<text x="57.00" y="787.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Global Holm p (90 tests): 0.0090</text>
+<rect x="535.00" y="112.00" width="465.00" height="785.00" rx="12.00" fill="#F6F8FA" stroke="#E3E8ED"/>
+<text x="557.00" y="150.00" font-family="Arial, Helvetica, sans-serif" font-size="20px" font-weight="bold" fill="#17212B" text-anchor="start">Independent white noise</text>
+<text x="557.00" y="202.00" font-family="Arial, Helvetica, sans-serif" font-size="15px" font-weight="bold" fill="#17212B" text-anchor="start">Final state fidelity difference</text>
+<line x1="573.00" y1="237.00" x2="972.00" y2="237.00" stroke="#D9E0E7" stroke-width="2.00"/>
+<line x1="699.71" y1="204.00" x2="699.71" y2="270.00" stroke="#17212B" stroke-width="1.50" stroke-dasharray="5 4"/>
+<line x1="616.64" y1="237.00" x2="928.36" y2="237.00" stroke="#667788" stroke-width="4.00"/>
+<line x1="616.64" y1="229.00" x2="616.64" y2="245.00" stroke="#667788" stroke-width="2.00"/>
+<line x1="928.36" y1="229.00" x2="928.36" y2="245.00" stroke="#667788" stroke-width="2.00"/>
+<circle cx="765.24" cy="237.00" r="8.00" fill="#667788" stroke="#FFFFFF" stroke-width="2.00"/>
+<text x="573.00" y="265.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="start">-2.7e-06</text>
+<text x="699.71" y="265.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="bold" fill="#17212B" text-anchor="middle">0</text>
+<text x="972.00" y="265.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">5.8e-06</text>
+<text x="557.00" y="294.00" font-family="Arial, Helvetica, sans-serif" font-size="14px" font-weight="bold" fill="#667788" text-anchor="start">Delta = +1.38e-06</text>
+<text x="557.00" y="318.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">95% paired CI: [-1.76e-06, +4.83e-06]</text>
+<text x="557.00" y="341.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Global Holm p (90 tests): 1.0000</text>
+<text x="557.00" y="425.00" font-family="Arial, Helvetica, sans-serif" font-size="15px" font-weight="bold" fill="#17212B" text-anchor="start">RMS gate-angle error difference (deg)</text>
+<line x1="573.00" y1="460.00" x2="972.00" y2="460.00" stroke="#D9E0E7" stroke-width="2.00"/>
+<line x1="616.64" y1="427.00" x2="616.64" y2="493.00" stroke="#17212B" stroke-width="1.50" stroke-dasharray="5 4"/>
+<line x1="827.07" y1="460.00" x2="928.36" y2="460.00" stroke="#C43D40" stroke-width="4.00"/>
+<line x1="827.07" y1="452.00" x2="827.07" y2="468.00" stroke="#C43D40" stroke-width="2.00"/>
+<line x1="928.36" y1="452.00" x2="928.36" y2="468.00" stroke="#C43D40" stroke-width="2.00"/>
+<circle cx="876.67" cy="460.00" r="8.00" fill="#C43D40" stroke="#FFFFFF" stroke-width="2.00"/>
+<text x="573.00" y="488.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="start">-0.000</text>
+<text x="616.64" y="488.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="bold" fill="#17212B" text-anchor="middle">0</text>
+<text x="972.00" y="488.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">0.001</text>
+<text x="557.00" y="517.00" font-family="Arial, Helvetica, sans-serif" font-size="14px" font-weight="bold" fill="#C43D40" text-anchor="start">Delta = +0.001 deg</text>
+<text x="557.00" y="541.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">95% paired CI: [+0.001 deg, +0.001 deg]</text>
+<text x="557.00" y="564.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Global Holm p (90 tests): 0.0090</text>
+<text x="557.00" y="648.00" font-family="Arial, Helvetica, sans-serif" font-size="15px" font-weight="bold" fill="#17212B" text-anchor="start">RMS cumulative error difference (deg)</text>
+<line x1="573.00" y1="683.00" x2="972.00" y2="683.00" stroke="#D9E0E7" stroke-width="2.00"/>
+<line x1="837.17" y1="650.00" x2="837.17" y2="716.00" stroke="#17212B" stroke-width="1.50" stroke-dasharray="5 4"/>
+<line x1="616.64" y1="683.00" x2="928.36" y2="683.00" stroke="#667788" stroke-width="4.00"/>
+<line x1="616.64" y1="675.00" x2="616.64" y2="691.00" stroke="#667788" stroke-width="2.00"/>
+<line x1="928.36" y1="675.00" x2="928.36" y2="691.00" stroke="#667788" stroke-width="2.00"/>
+<circle cx="775.33" cy="683.00" r="8.00" fill="#667788" stroke="#FFFFFF" stroke-width="2.00"/>
+<text x="573.00" y="711.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="start">-0.010</text>
+<text x="837.17" y="711.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="bold" fill="#17212B" text-anchor="middle">0</text>
+<text x="972.00" y="711.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">0.005</text>
+<text x="557.00" y="740.00" font-family="Arial, Helvetica, sans-serif" font-size="14px" font-weight="bold" fill="#667788" text-anchor="start">Delta = -0.002 deg</text>
+<text x="557.00" y="764.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">95% paired CI: [-0.009 deg, +0.004 deg]</text>
+<text x="557.00" y="787.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Global Holm p (90 tests): 1.0000</text>
+<rect x="1035.00" y="112.00" width="465.00" height="785.00" rx="12.00" fill="#F6F8FA" stroke="#E3E8ED"/>
+<text x="1057.00" y="150.00" font-family="Arial, Helvetica, sans-serif" font-size="20px" font-weight="bold" fill="#17212B" text-anchor="start">Probe mismatch</text>
+<text x="1057.00" y="202.00" font-family="Arial, Helvetica, sans-serif" font-size="15px" font-weight="bold" fill="#17212B" text-anchor="start">Final state fidelity difference</text>
+<line x1="1073.00" y1="237.00" x2="1472.00" y2="237.00" stroke="#D9E0E7" stroke-width="2.00"/>
+<line x1="1428.36" y1="204.00" x2="1428.36" y2="270.00" stroke="#17212B" stroke-width="1.50" stroke-dasharray="5 4"/>
+<line x1="1116.64" y1="237.00" x2="1123.51" y2="237.00" stroke="#C43D40" stroke-width="4.00"/>
+<line x1="1116.64" y1="229.00" x2="1116.64" y2="245.00" stroke="#C43D40" stroke-width="2.00"/>
+<line x1="1123.51" y1="229.00" x2="1123.51" y2="245.00" stroke="#C43D40" stroke-width="2.00"/>
+<circle cx="1120.11" cy="237.00" r="8.00" fill="#C43D40" stroke="#FFFFFF" stroke-width="2.00"/>
+<text x="1073.00" y="265.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="start">-1.1e-02</text>
+<text x="1428.36" y="265.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="bold" fill="#17212B" text-anchor="middle">0</text>
+<text x="1472.00" y="265.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">1.3e-03</text>
+<text x="1057.00" y="294.00" font-family="Arial, Helvetica, sans-serif" font-size="14px" font-weight="bold" fill="#C43D40" text-anchor="start">Delta = -9.29e-03</text>
+<text x="1057.00" y="318.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">95% paired CI: [-9.40e-03, -9.19e-03]</text>
+<text x="1057.00" y="341.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Global Holm p (90 tests): 0.0090</text>
+<text x="1057.00" y="425.00" font-family="Arial, Helvetica, sans-serif" font-size="15px" font-weight="bold" fill="#17212B" text-anchor="start">RMS gate-angle error difference (deg)</text>
+<line x1="1073.00" y1="460.00" x2="1472.00" y2="460.00" stroke="#D9E0E7" stroke-width="2.00"/>
+<line x1="1116.64" y1="427.00" x2="1116.64" y2="493.00" stroke="#17212B" stroke-width="1.50" stroke-dasharray="5 4"/>
+<line x1="1424.44" y1="460.00" x2="1428.36" y2="460.00" stroke="#C43D40" stroke-width="4.00"/>
+<line x1="1424.44" y1="452.00" x2="1424.44" y2="468.00" stroke="#C43D40" stroke-width="2.00"/>
+<line x1="1428.36" y1="452.00" x2="1428.36" y2="468.00" stroke="#C43D40" stroke-width="2.00"/>
+<circle cx="1426.38" cy="460.00" r="8.00" fill="#C43D40" stroke="#FFFFFF" stroke-width="2.00"/>
+<text x="1073.00" y="488.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="start">-0.003</text>
+<text x="1116.64" y="488.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="bold" fill="#17212B" text-anchor="middle">0</text>
+<text x="1472.00" y="488.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">0.026</text>
+<text x="1057.00" y="517.00" font-family="Arial, Helvetica, sans-serif" font-size="14px" font-weight="bold" fill="#C43D40" text-anchor="start">Delta = +0.023 deg</text>
+<text x="1057.00" y="541.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">95% paired CI: [+0.023 deg, +0.023 deg]</text>
+<text x="1057.00" y="564.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Global Holm p (90 tests): 0.0090</text>
+<text x="1057.00" y="648.00" font-family="Arial, Helvetica, sans-serif" font-size="15px" font-weight="bold" fill="#17212B" text-anchor="start">RMS cumulative error difference (deg)</text>
+<line x1="1073.00" y1="683.00" x2="1472.00" y2="683.00" stroke="#D9E0E7" stroke-width="2.00"/>
+<line x1="1116.64" y1="650.00" x2="1116.64" y2="716.00" stroke="#17212B" stroke-width="1.50" stroke-dasharray="5 4"/>
+<line x1="1419.43" y1="683.00" x2="1428.36" y2="683.00" stroke="#C43D40" stroke-width="4.00"/>
+<line x1="1419.43" y1="675.00" x2="1419.43" y2="691.00" stroke="#C43D40" stroke-width="2.00"/>
+<line x1="1428.36" y1="675.00" x2="1428.36" y2="691.00" stroke="#C43D40" stroke-width="2.00"/>
+<circle cx="1423.95" cy="683.00" r="8.00" fill="#C43D40" stroke="#FFFFFF" stroke-width="2.00"/>
+<text x="1073.00" y="711.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="start">-0.113</text>
+<text x="1116.64" y="711.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="bold" fill="#17212B" text-anchor="middle">0</text>
+<text x="1472.00" y="711.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">0.921</text>
+<text x="1057.00" y="740.00" font-family="Arial, Helvetica, sans-serif" font-size="14px" font-weight="bold" fill="#C43D40" text-anchor="start">Delta = +0.797 deg</text>
+<text x="1057.00" y="764.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">95% paired CI: [+0.785 deg, +0.808 deg]</text>
+<text x="1057.00" y="787.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Global Holm p (90 tests): 0.0090</text>
+<line x1="50.00" y1="925.00" x2="92.00" y2="925.00" stroke="#17212B" stroke-width="1.50" stroke-dasharray="5 4"/>
+<text x="102.00" y="931.00" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="normal" fill="#5D6B78" text-anchor="start">No difference</text>
+<line x1="255.00" y1="925.00" x2="297.00" y2="925.00" stroke="#238B73" stroke-width="4.00"/>
+<circle cx="276.00" cy="925.00" r="6.00" fill="#238B73" stroke="#FFFFFF" stroke-width="2.00"/>
+<text x="307.00" y="931.00" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="normal" fill="#5D6B78" text-anchor="start">Favors PQEC</text>
+<line x1="445.00" y1="925.00" x2="487.00" y2="925.00" stroke="#C43D40" stroke-width="4.00"/>
+<circle cx="466.00" cy="925.00" r="6.00" fill="#C43D40" stroke="#FFFFFF" stroke-width="2.00"/>
+<text x="497.00" y="931.00" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="normal" fill="#5D6B78" text-anchor="start">Favors reactive</text>
+<text x="760.00" y="931.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Each scenario has its own scale; positive fidelity and negative error differences favor PQEC.</text>
+</svg>

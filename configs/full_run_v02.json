@@ -1,0 +1,48 @@
+{
+  "experiment_id": "pqec-single-qubit-v0.2-full",
+  "claim_scope": "simulation-validated prototype; no hardware validation",
+  "seed_schedule": {
+    "base_seed": 20261031,
+    "scenario_offsets": {
+      "slow_drift": 0,
+      "white_noise": 100003,
+      "probe_mismatch": 200003
+    },
+    "seed_block_stride": 1000003,
+    "trial_stride": 1009,
+    "probe_trajectory_seed_offset": 5000117,
+    "probe_measurement_seed_offset": 700001,
+    "randomized_compiling_seed_offset": 900001,
+    "randomized_compiling_repeat_stride": 97,
+    "statistical_seed_formula": "base_seed + scenario_index*10007 + metric_index*97409 + predictor_index*1000003",
+    "permutation_seed_offset": 2000003
+  },
+  "parameters": {
+    "cycles": 64,
+    "trials": 100,
+    "seed_blocks": 2,
+    "seed": 20261031,
+    "shots": 4096,
+    "probe_repetitions": 13,
+    "probe_interval": 1,
+    "predictor_window": 16,
+    "trend_threshold": 2.0,
+    "min_trend_observations": 4,
+    "rc_compilations": 1,
+    "bootstrap_repetitions": 5000,
+    "permutation_repetitions": 10000,
+    "base_error_deg": 2.0,
+    "drift_rate_deg": 0.01,
+    "drift_jitter_deg": 0.005,
+    "white_noise_sigma_deg": 0.2,
+    "probe_mismatch_offset_deg": 0.2,
+    "probe_mismatch_drift_rate_deg": 0.03,
+    "probe_local_noise_sigma_deg": 0.05,
+    "probe_readout_error": 0.01,
+    "probe_readout_calibration_error": 0.01,
+    "probe_mismatch_readout_error": 0.02,
+    "output": "results/pqec_single_qubit_summary.csv",
+    "runs_output": "results/pqec_single_qubit_runs.csv",
+    "paired_output": "results/pqec_single_qubit_paired_stats.csv"
+  }
+}

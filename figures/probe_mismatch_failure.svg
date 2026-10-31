@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="760" viewBox="0 0 1320 760" role="img">
+<title>Probe mismatch failure scenario</title>
+<desc>Under a probe drift of 0.03 degrees per cycle and logical drift of 0.01 degrees per cycle, guarded PQEC has lower final fidelity and higher accumulated error than the reactive controller.</desc>
+<rect width="1320" height="760" fill="#FFFFFF"/>
+<rect x="0.00" y="0.00" width="1320.00" height="115.00" rx="0.00" fill="#FFF1F1" stroke="none"/>
+<text x="42.00" y="48.00" font-family="Arial, Helvetica, sans-serif" font-size="28px" font-weight="bold" fill="#C43D40" text-anchor="start">Failure mode: probe mismatch</text>
+<text x="42.00" y="80.00" font-family="Arial, Helvetica, sans-serif" font-size="16px" font-weight="normal" fill="#17212B" text-anchor="start">Probe drift = 0.03 deg/cycle; logical-qubit drift = 0.01 deg/cycle; probe offset = 0.20 deg</text>
+<rect x="35.00" y="138.00" width="610.00" height="570.00" rx="12.00" fill="#F6F8FA" stroke="#E3E8ED"/>
+<text x="57.00" y="174.00" font-family="Arial, Helvetica, sans-serif" font-size="19px" font-weight="bold" fill="#17212B" text-anchor="start">Final state fidelity (higher is better)</text>
+<line x1="107.00" y1="563.00" x2="617.00" y2="563.00" stroke="#D9E0E7" stroke-width="1.00"/>
+<text x="97.00" y="567.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">0.82</text>
+<line x1="107.00" y1="476.00" x2="617.00" y2="476.00" stroke="#D9E0E7" stroke-width="1.00"/>
+<text x="97.00" y="480.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">0.83</text>
+<line x1="107.00" y1="389.00" x2="617.00" y2="389.00" stroke="#D9E0E7" stroke-width="1.00"/>
+<text x="97.00" y="393.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">0.84</text>
+<line x1="107.00" y1="302.00" x2="617.00" y2="302.00" stroke="#D9E0E7" stroke-width="1.00"/>
+<text x="97.00" y="306.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">0.85</text>
+<line x1="107.00" y1="215.00" x2="617.00" y2="215.00" stroke="#D9E0E7" stroke-width="1.00"/>
+<text x="97.00" y="219.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">0.86</text>
+<rect x="184.00" y="338.65" width="66.00" height="224.35" rx="4.00" fill="#277DA1" stroke="none"/>
+<line x1="217.00" y1="333.63" x2="217.00" y2="343.65" stroke="#17212B" stroke-width="2.00"/>
+<line x1="205.00" y1="343.65" x2="229.00" y2="343.65" stroke="#17212B" stroke-width="2.00"/>
+<line x1="205.00" y1="333.63" x2="229.00" y2="333.63" stroke="#17212B" stroke-width="2.00"/>
+<text x="217.00" y="326.65" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="bold" fill="#277DA1" text-anchor="middle">0.8458</text>
+<text x="217.00" y="588.00" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="normal" fill="#17212B" text-anchor="middle">Reactive</text>
+<rect x="374.00" y="419.49" width="66.00" height="143.51" rx="4.00" fill="#C43D40" stroke="none"/>
+<line x1="407.00" y1="414.03" x2="407.00" y2="424.55" stroke="#17212B" stroke-width="2.00"/>
+<line x1="395.00" y1="424.55" x2="419.00" y2="424.55" stroke="#17212B" stroke-width="2.00"/>
+<line x1="395.00" y1="414.03" x2="419.00" y2="414.03" stroke="#17212B" stroke-width="2.00"/>
+<text x="407.00" y="407.49" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="bold" fill="#C43D40" text-anchor="middle">0.8365</text>
+<text x="407.00" y="588.00" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="normal" fill="#17212B" text-anchor="middle">Guarded PQEC</text>
+<text x="57.00" y="625.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Paired delta (PQEC - reactive)</text>
+<text x="57.00" y="649.00" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="bold" fill="#C43D40" text-anchor="start">-0.00929 [-0.00940, -0.00919]</text>
+<text x="57.00" y="674.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Global Holm p (90 tests): 0.0090</text>
+<rect x="675.00" y="138.00" width="610.00" height="570.00" rx="12.00" fill="#F6F8FA" stroke="#E3E8ED"/>
+<text x="697.00" y="174.00" font-family="Arial, Helvetica, sans-serif" font-size="19px" font-weight="bold" fill="#17212B" text-anchor="start">RMS cumulative error (lower is better)</text>
+<line x1="747.00" y1="563.00" x2="1257.00" y2="563.00" stroke="#D9E0E7" stroke-width="1.00"/>
+<text x="737.00" y="567.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">20</text>
+<line x1="747.00" y1="476.00" x2="1257.00" y2="476.00" stroke="#D9E0E7" stroke-width="1.00"/>
+<text x="737.00" y="480.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">21</text>
+<line x1="747.00" y1="389.00" x2="1257.00" y2="389.00" stroke="#D9E0E7" stroke-width="1.00"/>
+<text x="737.00" y="393.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">22</text>
+<line x1="747.00" y1="302.00" x2="1257.00" y2="302.00" stroke="#D9E0E7" stroke-width="1.00"/>
+<text x="737.00" y="306.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">23</text>
+<line x1="747.00" y1="215.00" x2="1257.00" y2="215.00" stroke="#D9E0E7" stroke-width="1.00"/>
+<text x="737.00" y="219.00" font-family="Arial, Helvetica, sans-serif" font-size="11px" font-weight="normal" fill="#5D6B78" text-anchor="end">24</text>
+<rect x="824.00" y="394.85" width="66.00" height="168.15" rx="4.00" fill="#277DA1" stroke="none"/>
+<line x1="857.00" y1="390.03" x2="857.00" y2="399.97" stroke="#17212B" stroke-width="2.00"/>
+<line x1="845.00" y1="399.97" x2="869.00" y2="399.97" stroke="#17212B" stroke-width="2.00"/>
+<line x1="845.00" y1="390.03" x2="869.00" y2="390.03" stroke="#17212B" stroke-width="2.00"/>
+<text x="857.00" y="382.85" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="bold" fill="#277DA1" text-anchor="middle">21.93 deg</text>
+<text x="857.00" y="588.00" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="normal" fill="#17212B" text-anchor="middle">Reactive</text>
+<rect x="1014.00" y="325.54" width="66.00" height="237.46" rx="4.00" fill="#C43D40" stroke="none"/>
+<line x1="1047.00" y1="320.57" x2="1047.00" y2="330.53" stroke="#17212B" stroke-width="2.00"/>
+<line x1="1035.00" y1="330.53" x2="1059.00" y2="330.53" stroke="#17212B" stroke-width="2.00"/>
+<line x1="1035.00" y1="320.57" x2="1059.00" y2="320.57" stroke="#17212B" stroke-width="2.00"/>
+<text x="1047.00" y="313.54" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="bold" fill="#C43D40" text-anchor="middle">22.73 deg</text>
+<text x="1047.00" y="588.00" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="normal" fill="#17212B" text-anchor="middle">Guarded PQEC</text>
+<text x="697.00" y="625.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Paired delta (PQEC - reactive), degrees</text>
+<text x="697.00" y="649.00" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="bold" fill="#C43D40" text-anchor="start">+0.797 [+0.785, +0.808]</text>
+<text x="697.00" y="674.00" font-family="Arial, Helvetica, sans-serif" font-size="12px" font-weight="normal" fill="#5D6B78" text-anchor="start">Global Holm p (90 tests): 0.0090</text>
+<text x="42.00" y="740.00" font-family="Arial, Helvetica, sans-serif" font-size="13px" font-weight="normal" fill="#5D6B78" text-anchor="start">Bars: per-method mean with marginal 95% bootstrap CI. The reported test uses paired within-run differences.</text>
+</svg>

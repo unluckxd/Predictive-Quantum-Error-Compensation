@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import math
 import random
 from pathlib import Path
@@ -877,7 +878,16 @@ def print_paired_statistics(rows: list[dict[str, object]]) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    config_scanner = argparse.ArgumentParser(add_help=False)
+    config_scanner.add_argument("--config", type=Path)
+    config_path = config_scanner.parse_known_args()[0].config
+
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--config",
+        type=Path,
+        help="Load simulation defaults from a JSON experiment configuration.",
+    )
     parser.add_argument("--cycles", type=int, default=64)
     parser.add_argument("--trials", type=int, default=100)
     parser.add_argument("--seed-blocks", type=int, default=2)
@@ -916,6 +926,25 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=Path("results/pqec_single_qubit_paired_stats.csv"),
     )
+    if config_path is not None:
+        try:
+            config_data = json.loads(config_path.read_text(encoding="utf-8"))
+            defaults = config_data["parameters"]
+        except (OSError, KeyError, json.JSONDecodeError) as exc:
+            parser.error(f"Could not read configuration {config_path}: {exc}")
+        allowed_parameters = {
+            action.dest for action in parser._actions if action.dest != "help"
+        }
+        unknown_parameters = set(defaults) - allowed_parameters
+        if unknown_parameters:
+            parser.error(
+                "Unknown configuration parameters: "
+                + ", ".join(sorted(unknown_parameters))
+            )
+        for path_key in ("output", "runs_output", "paired_output"):
+            if path_key in defaults:
+                defaults[path_key] = Path(defaults[path_key])
+        parser.set_defaults(**defaults)
     args = parser.parse_args()
     if min(
         args.cycles,
